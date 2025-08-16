@@ -711,6 +711,7 @@
 
         document.addEventListener('DOMContentLoaded', async () => {
             lucide.createIcons(); // Initialize Lucide Icons immediately
+            console.log("DOM Content Loaded. Initializing Firebase...");
 
             try {
                 // Initialize Firebase App
@@ -730,39 +731,55 @@
                     console.log("Signed in anonymously.");
                 }
 
-                // Set up auth state change listener to get the userId
-                onAuthStateChanged(window.auth, (user) => {
-                    if (user) {
-                        window.userId = user.uid;
-                        document.getElementById('user-id-display').textContent = `User ID: ${window.userId}`;
-                        console.log("Firebase Auth State Changed. User ID:", window.userId);
-                    } else {
-                        // Fallback for no authenticated user (e.g., anonymous sign-in failed, or just a default)
-                        // Use a random UUID as a temporary identifier if no auth user, though Firestore rules may restrict writes.
-                        window.userId = crypto.randomUUID();
-                        document.getElementById('user-id-display').textContent = `User ID: Anonymous (local ID: ${window.userId.substring(0, 8)}...)`;
-                        console.log("Firebase Auth State Changed. No user, using anonymous ID:", window.userId);
-                    }
-                    // Call your app's main initialization function after auth is ready
-                    initializeSynapseApp();
-                    // Hide loading overlay once auth is settled and data fetching can begin
-                    document.getElementById('loading-overlay').classList.remove('show');
+                // Use a promise to ensure auth state is settled before proceeding
+                const userAuthPromise = new Promise(resolve => {
+                    const unsubscribe = onAuthStateChanged(window.auth, (user) => {
+                        if (user) {
+                            window.userId = user.uid;
+                            document.getElementById('user-id-display').textContent = `User ID: ${window.userId}`;
+                            console.log("Firebase Auth State Changed. User ID:", window.userId);
+                        } else {
+                            window.userId = crypto.randomUUID();
+                            document.getElementById('user-id-display').textContent = `User ID: Anonymous (local ID: ${window.userId.substring(0, 8)}...)`;
+                            console.log("Firebase Auth State Changed. No user, using anonymous ID:", window.userId);
+                        }
+                        unsubscribe(); // Unsubscribe after the first state change
+                        resolve();
+                    });
                 });
 
+                await userAuthPromise; // Wait for auth state to be confirmed
+                console.log("Authentication state settled. Proceeding with app initialization.");
+
+                try {
+                    // Call your app's main initialization function after auth is ready
+                    await initializeSynapseApp(); // Now awaiting initializeSynapseApp
+                    console.log("Synapse app initialized successfully.");
+                } catch (initError) {
+                    console.error("Error during Synapse app initialization:", initError);
+                    showMessage("App failed to load. Please try refreshing or check console for errors.", 5000);
+                } finally {
+                    // Always hide loading overlay once auth is settled and data fetching/population attempts are complete
+                    document.getElementById('loading-overlay').classList.remove('show');
+                    console.log("Loading overlay hidden.");
+                }
+
             } catch (error) {
-                console.error("Error initializing Firebase or signing in:", error);
-                showMessage("Failed to initialize app. Please check console for details.");
+                console.error("Critical Error initializing Firebase or signing in:", error);
+                showMessage("Failed to initialize app. Please check console for details.", 8000);
                 // Fallback to purely local data and hide loading overlay if Firebase initialization fails
-                window.userId = crypto.randomUUID(); // Ensure userId is still set for local operations
+                window.userId = crypto.randomUUID();
                 document.getElementById('user-id-display').textContent = `User ID: Anonymous (Firebase Error, local ID: ${window.userId.substring(0, 8)}...)`;
-                initializeSynapseApp(); // Run app with local data
+                // Attempt to run app with local data, but it might not work well without Firestore.
+                // Still hide the loading overlay to prevent indefinite hang.
                 document.getElementById('loading-overlay').classList.remove('show');
             }
         });
 
         // --- Your Main Synapse App Logic Goes Here ---
         // This function will be called AFTER Firebase is initialized and the user is authenticated.
-        function initializeSynapseApp() {
+        async function initializeSynapseApp() { // Made async
+            console.log("initializeSynapseApp started.");
             const sidebarItems = document.querySelectorAll('.sidebar-item');
             const searchInput = document.getElementById('search-input');
             const currentSectionTitle = document.getElementById('current-section-title');
@@ -1088,6 +1105,7 @@
 
             // --- Render Content for Current Folder in My Drive ---
             function renderMyDriveContent() {
+                console.log("renderMyDriveContent called. currentParentFolderId:", currentParentFolderId);
                 currentSectionTitle.textContent = currentPath[currentPath.length - 1].name;
                 updateDebugSectionDisplay();
                 updateBreadcrumbs();
@@ -1334,6 +1352,7 @@
 
             // Function to populate initial data (replaces Firebase data fetching)
             async function ensureEaglercraftContent() {
+                console.log("ensureEaglercraftContent started.");
                 if (!window.db || !window.userId) {
                     console.warn("Firebase not ready for ensureEaglercraftContent.");
                     return;
@@ -1347,6 +1366,7 @@
                 let eaglercraftFolderId;
 
                 if (existingFoldersSnapshot.empty) {
+                    console.log("Creating 'eaglercraft' folder...");
                     const newFolderDoc = await addDoc(userFoldersRef, {
                         name: 'eaglercraft',
                         type: 'folder',
@@ -1357,8 +1377,10 @@
                     });
                     eaglercraftFolderId = newFolderDoc.id;
                     showMessage('Created "eaglercraft" folder in Firestore.');
+                    console.log("Created 'eaglercraft' folder with ID:", eaglercraftFolderId);
                 } else {
                     eaglercraftFolderId = existingFoldersSnapshot.docs[0].id;
+                    console.log("'eaglercraft' folder already exists with ID:", eaglercraftFolderId);
                 }
 
                 const eaglercraftFileRedirects = {
@@ -1423,6 +1445,7 @@
                         }
                     }
                 }
+                console.log("ensureEaglercraftContent finished.");
             }
 
 
@@ -1589,7 +1612,7 @@
                     hideManageContentModal();
                 } catch (e) {
                     console.error("Error adding document: ", e);
-                    showMessage("Failed to create file in Firestore. 😞");
+                    showMessage("Failed to create file in Firestore.😞");
                 }
             });
 
@@ -1621,7 +1644,7 @@
                     hideManageContentModal();
                 } catch (e) {
                     console.error("Error adding document: ", e);
-                    showMessage("Failed to create folder in Firestore. 😞");
+                    showMessage("Failed to create folder in Firestore.😞");
                 }
             });
 
@@ -1676,7 +1699,7 @@
                     hideManageContentModal();
                 } catch (e) {
                     console.error("Error uploading file: ", e);
-                    showMessage("Failed to upload file to Firestore. 😞");
+                    showMessage("Failed to upload file to Firestore.😞");
                 }
             });
 
@@ -1700,7 +1723,8 @@
             });
 
             // --- Firestore Real-time Listeners Setup ---
-            function setupFirestoreListeners() {
+            async function setupFirestoreListeners() {
+                console.log("setupFirestoreListeners started.");
                 if (!window.db || !window.userId) {
                     console.warn("Firestore or userId not available for listeners.");
                     return;
@@ -1709,50 +1733,91 @@
                 const userFoldersRef = collection(window.db, `artifacts/${appId}/users/${window.userId}/folders`);
                 const userFilesRef = collection(window.db, `artifacts/${appId}/users/${window.userId}/files`);
 
-                // Listener for ALL folders for the user
-                onSnapshot(userFoldersRef, (snapshot) => {
-                    window.allFolders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    console.log("All Folders updated from Firestore:", window.allFolders);
-                    // Re-render relevant section if active
-                    if (currentSection === 'my-drive') {
-                        renderMyDriveContent();
-                    } else if (currentSection === 'recent') {
-                         // Re-calculate recent files/folders if folders change
-                        const files = window.allFiles.map(doc => ({ id: doc.id, ...doc.data() }));
-                        const folders = window.allFolders.map(doc => ({ id: doc.id, ...doc.data() }));
-                        window.recentFilesFolders = [...files, ...folders].sort((a, b) => {
-                            const dateA = new Date(a.modified || 0);
-                            const dateB = new Date(b.modified || 0);
-                            return dateB.getTime() - dateA.getTime();
-                        }).slice(0, 10);
-                        handleSidebarNavigation('recent');
-                    }
-                }, (error) => console.error("Error listening to all folders:", error));
+                let foldersLoaded = false;
+                let filesLoaded = false;
 
-                // Listener for ALL files for the user
-                onSnapshot(userFilesRef, (snapshot) => {
-                    window.allFiles = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    console.log("All Files updated from Firestore:", window.allFiles);
-                    // Re-render relevant section if active
-                    if (currentSection === 'my-drive') {
-                        renderMyDriveContent();
-                    } else if (currentSection === 'starred') {
-                        window.starredFiles = window.allFiles.filter(f => f.isStarred === true);
-                        handleSidebarNavigation('starred');
-                    } else if (currentSection === 'recent') {
-                        // Re-calculate recent files/folders if files change
-                        const files = window.allFiles.map(doc => ({ id: doc.id, ...doc.data() }));
-                        const folders = window.allFolders.map(doc => ({ id: doc.id, ...doc.data() }));
-                        window.recentFilesFolders = [...files, ...folders].sort((a, b) => {
-                            const dateA = new Date(a.modified || 0);
-                            const dateB = new Date(b.modified || 0);
-                            return dateB.getTime() - dateA.getTime();
-                        }).slice(0, 10);
-                        handleSidebarNavigation('recent');
-                    } else if (currentSection === 'shared-with-me') {
-                        // Re-render shared if files change
-                        handleSidebarNavigation('shared-with-me');
-                    }
-                }, (error) => console.error("Error listening to all files:", error));
+                const foldersPromise = new Promise(resolve => {
+                    onSnapshot(userFoldersRef, (snapshot) => {
+                        window.allFolders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        console.log("All Folders updated from Firestore:", window.allFolders);
+                        // Re-render relevant section if active
+                        if (currentSection === 'my-drive') {
+                            renderMyDriveContent();
+                        } else if (currentSection === 'recent') {
+                            const files = window.allFiles.map(doc => ({ id: doc.id, ...doc.data() }));
+                            const folders = window.allFolders.map(doc => ({ id: doc.id, ...doc.data() }));
+                            window.recentFilesFolders = [...files, ...folders].sort((a, b) => {
+                                const dateA = new Date(a.modified || 0);
+                                const dateB = new Date(b.modified || 0);
+                                return dateB.getTime() - dateA.getTime();
+                            }).slice(0, 10);
+                            handleSidebarNavigation('recent');
+                        }
+                        if (!foldersLoaded) {
+                            foldersLoaded = true;
+                            resolve();
+                        }
+                    }, (error) => {
+                        console.error("Error listening to all folders:", error);
+                        if (!foldersLoaded) {
+                            foldersLoaded = true;
+                            resolve(); // Resolve even on error to unblock loading, app might run with partial data
+                        }
+                    });
+                });
 
+                const filesPromise = new Promise(resolve => {
+                    onSnapshot(userFilesRef, (snapshot) => {
+                        window.allFiles = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        console.log("All Files updated from Firestore:", window.allFiles);
+                        // Re-render relevant section if active
+                        if (currentSection === 'my-drive') {
+                            renderMyDriveContent();
+                        } else if (currentSection === 'starred') {
+                            window.starredFiles = window.allFiles.filter(f => f.isStarred === true);
+                            handleSidebarNavigation('starred');
+                        } else if (currentSection === 'recent') {
+                            const files = window.allFiles.map(doc => ({ id: doc.id, ...doc.data() }));
+                            const folders = window.allFolders.map(doc => ({ id: doc.id, ...doc.data() }));
+                            window.recentFilesFolders = [...files, ...folders].sort((a, b) => {
+                                const dateA = new Date(a.modified || 0);
+                                const dateB = new Date(b.modified || 0);
+                                return dateB.getTime() - dateA.getTime();
+                            }).slice(0, 10);
+                            handleSidebarNavigation('recent');
+                        } else if (currentSection === 'shared-with-me') {
+                            handleSidebarNavigation('shared-with-me');
+                        }
+                        if (!filesLoaded) {
+                            filesLoaded = true;
+                            resolve();
+                        }
+                    }, (error) => {
+                        console.error("Error listening to all files:", error);
+                        if (!filesLoaded) {
+                            filesLoaded = true;
+                            resolve(); // Resolve even on error to unblock loading
+                        }
+                    });
+                });
 
+                await Promise.all([foldersPromise, filesPromise]);
+                console.log("Initial Firestore data for folders and files received.");
+            }
+
+            // Call setupFirestoreListeners first
+            await setupFirestoreListeners();
+            console.log("Firestore listeners initialized and initial data loaded.");
+
+            // Ensure Eaglercraft content is present/updated after listeners are set up
+            await ensureEaglercraftContent();
+            console.log("Eaglercraft content ensured.");
+
+            // Explicitly render My Drive after initial content is set up
+            handleSidebarNavigation('my-drive');
+            console.log("Initial My Drive content rendered.");
+
+        } // End of initializeSynapseApp
+    </script>
+</body>
+</html>
