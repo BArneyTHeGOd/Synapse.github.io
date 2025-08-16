@@ -1,4 +1,4 @@
-!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -713,10 +713,17 @@
             lucide.createIcons(); // Initialize Lucide Icons immediately
             console.log("DOM Content Loaded. Initializing Firebase...");
 
-            // Immediately hide the loading overlay when the DOM is ready.
-            // This is done regardless of the Firebase load status for instant display.
-            document.getElementById('loading-overlay').classList.remove('show');
-            document.getElementById('loading-overlay').style.display = 'none'; // Ensure it's hidden from layout
+            // Immediately hide and remove the loading overlay when the DOM is ready.
+            const loadingOverlay = document.getElementById('loading-overlay');
+            if (loadingOverlay) {
+                loadingOverlay.classList.remove('show');
+                loadingOverlay.style.display = 'none';
+                // Remove the element from the DOM after a short delay to ensure rendering completes
+                setTimeout(() => {
+                    loadingOverlay.remove();
+                    console.log("Loading overlay removed from DOM.");
+                }, 100);
+            }
 
             try {
                 // Initialize Firebase App
@@ -795,7 +802,7 @@
 
             // Settings Modal Elements
             const settingsModal = document.getElementById('settings-modal');
-            const closeSettingsModalBtn = document.getElementById('close-settings-modal');
+            const closeSettingsModalBtn = document = document.getElementById('close-settings-modal');
             const openManageContentModalBtn = document.getElementById('open-manage-content-modal-btn');
             const themeToggleSettingsBtn = document.getElementById('theme-toggle-settings-btn');
             const openAccountSecurityModalBtn = document.getElementById('open-account-security-modal-btn');
