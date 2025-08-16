@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -713,6 +713,11 @@
             lucide.createIcons(); // Initialize Lucide Icons immediately
             console.log("DOM Content Loaded. Initializing Firebase...");
 
+            // Immediately hide the loading overlay when the DOM is ready.
+            // This is done regardless of the Firebase load status for instant display.
+            document.getElementById('loading-overlay').classList.remove('show');
+            document.getElementById('loading-overlay').style.display = 'none'; // Ensure it's hidden from layout
+
             try {
                 // Initialize Firebase App
                 window.app = initializeApp(firebaseConfig);
@@ -758,21 +763,15 @@
                 } catch (initError) {
                     console.error("Error during Synapse app initialization:", initError);
                     showMessage("App failed to load. Please try refreshing or check console for errors.", 5000);
-                } finally {
-                    // Always hide loading overlay once auth is settled and data fetching/population attempts are complete
-                    document.getElementById('loading-overlay').classList.remove('show');
-                    console.log("Loading overlay hidden.");
                 }
 
             } catch (error) {
                 console.error("Critical Error initializing Firebase or signing in:", error);
                 showMessage("Failed to initialize app. Please check console for details.", 8000);
-                // Fallback to purely local data and hide loading overlay if Firebase initialization fails
+                // Fallback to purely local data if Firebase initialization fails
                 window.userId = crypto.randomUUID();
                 document.getElementById('user-id-display').textContent = `User ID: Anonymous (Firebase Error, local ID: ${window.userId.substring(0, 8)}...)`;
                 // Attempt to run app with local data, but it might not work well without Firestore.
-                // Still hide the loading overlay to prevent indefinite hang.
-                document.getElementById('loading-overlay').classList.remove('show');
             }
         });
 
@@ -1589,7 +1588,7 @@
                     fileIcon = icon;
                     fileColor = color;
                     fileContent = `This is dummy content for the file "${name}". No actual file data is stored.`;
-                    // redirectUrl remains undefined if no link is provided
+                    // redirectUrl remains undefined if no link was provided
                 }
 
                 // Now construct the newFile object after all properties are determined
