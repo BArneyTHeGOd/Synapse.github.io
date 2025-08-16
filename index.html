@@ -577,6 +577,9 @@
             </button>
             <h3 class="text-lg font-semibold mb-4">Account & Security</h3>
             <div class="flex flex-col gap-4">
+                <button id="google-sign-in-btn" class="btn-primary flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium w-full bg-blue-600 hover:bg-blue-700">
+                    <i data-lucide="power" class="w-5 h-5 mr-2"></i> Sign in with Google
+                </button>
                 <button class="btn-secondary flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium w-full">
                     <i data-lucide="key-round" class="w-5 h-5 mr-2"></i> Change Password
                 </button>
@@ -684,10 +687,82 @@
             });
         }
 
-        // Initialize Lucide Icons after the DOM is loaded
-        document.addEventListener('DOMContentLoaded', async () => {
-            lucide.createIcons();
+        // Firebase SDK Imports and Initialization
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, getDocs, onSnapshot, addDoc, updateDoc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // Declare global variables for Firebase services
+        // These are made 'window.propertyName' so they are accessible throughout your other scripts
+        window.app;
+        window.db;
+        window.auth;
+        window.userId;
+        window.allFolders = []; // Will be populated by Firestore listeners
+        window.allFiles = [];   // Will be populated by Firestore listeners
+        window.starredFiles = []; // To store starred files for the 'Starred' section
+        window.recentFilesFolders = []; // To store recent files/folders for the 'Recent' section
+
+        // Global variables provided by the Canvas environment.
+        // They are crucial for initializing Firebase within this specific platform.
+        // Ensure they are correctly accessed with fallback for local development.
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            lucide.createIcons(); // Initialize Lucide Icons immediately
+
+            try {
+                // Initialize Firebase App
+                window.app = initializeApp(firebaseConfig);
+                // Get Firestore and Auth instances
+                window.db = getFirestore(window.app);
+                window.auth = getAuth(window.app);
+
+                console.log("Firebase App Initialized.");
+
+                // Authenticate user initially with custom token or anonymously
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(window.auth, __initial_auth_token);
+                    console.log("Signed in with custom token.");
+                } else {
+                    await signInAnonymously(window.auth);
+                    console.log("Signed in anonymously.");
+                }
+
+                // Set up auth state change listener to get the userId
+                onAuthStateChanged(window.auth, (user) => {
+                    if (user) {
+                        window.userId = user.uid;
+                        document.getElementById('user-id-display').textContent = `User ID: ${window.userId}`;
+                        console.log("Firebase Auth State Changed. User ID:", window.userId);
+                    } else {
+                        // Fallback for no authenticated user (e.g., anonymous sign-in failed, or just a default)
+                        // Use a random UUID as a temporary identifier if no auth user, though Firestore rules may restrict writes.
+                        window.userId = crypto.randomUUID();
+                        document.getElementById('user-id-display').textContent = `User ID: Anonymous (local ID: ${window.userId.substring(0, 8)}...)`;
+                        console.log("Firebase Auth State Changed. No user, using anonymous ID:", window.userId);
+                    }
+                    // Call your app's main initialization function after auth is ready
+                    initializeSynapseApp();
+                    // Hide loading overlay once auth is settled and data fetching can begin
+                    document.getElementById('loading-overlay').classList.remove('show');
+                });
+
+            } catch (error) {
+                console.error("Error initializing Firebase or signing in:", error);
+                showMessage("Failed to initialize app. Please check console for details.");
+                // Fallback to purely local data and hide loading overlay if Firebase initialization fails
+                window.userId = crypto.randomUUID(); // Ensure userId is still set for local operations
+                document.getElementById('user-id-display').textContent = `User ID: Anonymous (Firebase Error, local ID: ${window.userId.substring(0, 8)}...)`;
+                initializeSynapseApp(); // Run app with local data
+                document.getElementById('loading-overlay').classList.remove('show');
+            }
+        });
+
+        // --- Your Main Synapse App Logic Goes Here ---
+        // This function will be called AFTER Firebase is initialized and the user is authenticated.
+        function initializeSynapseApp() {
             const sidebarItems = document.querySelectorAll('.sidebar-item');
             const searchInput = document.getElementById('search-input');
             const currentSectionTitle = document.getElementById('current-section-title');
@@ -697,36 +772,35 @@
             const userIdDisplay = document.getElementById('user-id-display');
             const breadcrumbsContainer = document.getElementById('breadcrumbs');
 
-            const newButton = document.getElementById('new-button'); // Re-added "New" button
+            const newButton = document.getElementById('new-button');
             const viewToggleSidebarBtn = document.getElementById('view-toggle-sidebar');
             const viewModeText = document.getElementById('view-mode-text');
-            // const themeToggleSidebarBtn = document.getElementById('theme-toggle-sidebar'); // Moved to settings
             const debugCurrentSectionSpan = document.getElementById('debug-current-section');
 
             // Settings Modal Elements
             const settingsModal = document.getElementById('settings-modal');
             const closeSettingsModalBtn = document.getElementById('close-settings-modal');
             const openManageContentModalBtn = document.getElementById('open-manage-content-modal-btn');
-            const themeToggleSettingsBtn = document.getElementById('theme-toggle-settings-btn'); // New theme toggle in settings
-            const openAccountSecurityModalBtn = document.getElementById('open-account-security-modal-btn'); // New account security button
+            const themeToggleSettingsBtn = document.getElementById('theme-toggle-settings-btn');
+            const openAccountSecurityModalBtn = document.getElementById('open-account-security-modal-btn');
 
             // Account & Security Modal Elements
             const accountSecurityModal = document.getElementById('account-security-modal');
             const closeAccountSecurityModalBtn = document.getElementById('close-account-security-modal');
+            const googleSignInBtn = document.getElementById('google-sign-in-btn'); // New: Google Sign-in button
 
             // Manage Content Modal Elements
             const manageContentModal = document.getElementById('manage-content-modal');
             const closeManageContentModalBtn = document.getElementById('close-manage-content-modal');
             const itemNameInput = document.getElementById('item-name-input');
-            const itemLinkInput = document.getElementById('item-link-input'); // New input for link
+            const itemLinkInput = document.getElementById('item-link-input');
             const createDummyFileBtn = document.getElementById('create-dummy-file-btn');
             const createFolderBtn = document.getElementById('create-folder-btn');
             const fileUploadInput = document.getElementById('file-upload-input');
             const selectFileBtn = document.getElementById('select-file-btn');
-            let selectedFile = null; // Declare selectedFile here
+            let selectedFile = null;
             const selectedFileNameSpan = document.getElementById('selected-file-name');
-            const uploadFileBtn = document.getElementById('upload-file-btn');
-
+            const uploadFileBtn = document.getElementById('upload-file-btn'); // Corrected from document()
 
             // Content Viewer Elements
             const contentViewer = document.getElementById('content-viewer');
@@ -739,43 +813,20 @@
             const showOriginalContentBtn = document.getElementById('show-original-content-btn');
             const contentViewerLoading = document.getElementById('content-viewer-loading');
 
-
-            // Loading Overlay
-            const loadingOverlay = document.getElementById('loading-overlay');
-
-            // --- LOCAL DATA STORAGE ---
-            let allFolders = [];
-            let allFiles = [];
-
             // Folder navigation state
-            let currentParentFolderId = null; // ID of the folder currently being viewed (null for root)
-            let currentPath = [{ name: 'My Drive', id: null }]; // For breadcrumbs
+            let currentParentFolderId = null;
+            let currentPath = [{ name: 'My Drive', id: null }];
 
-            let isListView = false; // State for view mode: false for grid, true for list
+            let isListView = false;
 
             // New global variables for content viewer state
             let currentViewerItem = null;
             let originalContent = '';
 
-            let typedSequence = ''; // Still here for potential future easter eggs if requested
+            let typedSequence = '';
             const adminPanelTrigger = 'barneyadminpanel';
             let sequenceTimeout;
-            let currentSection = 'my-drive'; // Default active section (used by sidebar)
-
-
-            // Simulate data loading and setup
-            async function initializeAppData() {
-                userIdDisplay.textContent = `User ID: Local Session`; // Static user ID
-                await ensureEaglercraftContent(); // Populate initial data
-                // Immediately render content since there's no async Firestore listener
-                if (currentSection === 'my-drive') {
-                    renderMyDriveContent();
-                } else {
-                    handleSidebarNavigation(currentSection);
-                }
-                loadingOverlay.classList.remove('show');
-                updateDebugSectionDisplay(); // Initial debug display update
-            }
+            let currentSection = 'my-drive';
 
 
             // --- Utility Functions ---
@@ -791,8 +842,8 @@
 
             // Get icon and color based on file extension
             function getFileIconAndColor(fileName) {
-                let icon = 'file'; // Default generic file icon
-                let color = 'text-gray-500'; // Default color
+                let icon = 'file';
+                let color = 'text-gray-500';
                 const extMatch = fileName.match(/\.([0-9a-z]+)(?:[\?#]|$)/i);
                 if (extMatch) {
                     const ext = extMatch[1].toLowerCase();
@@ -826,12 +877,11 @@
                 debugCurrentSectionSpan.textContent = `(DEBUG: ${currentSection})`;
             }
 
-            // --- Manage Content Panel Functions (formerly Admin Panel) ---
+            // --- Manage Content Panel Functions ---
             function showManageContentModal() {
                 manageContentModal.classList.add('show');
                 itemNameInput.focus();
-                lucide.createIcons(); // Re-initialize Lucide icons
-                // Reset file upload state when panel opens
+                lucide.createIcons();
                 selectedFile = null;
                 fileUploadInput.value = '';
                 selectedFileNameSpan.textContent = 'No file selected';
@@ -840,8 +890,8 @@
 
             function hideManageContentModal() {
                 manageContentModal.classList.remove('show');
-                itemNameInput.value = ''; // Clear input on close
-                itemLinkInput.value = ''; // Clear link input on close
+                itemNameInput.value = '';
+                itemLinkInput.value = '';
                 selectedFile = null;
                 fileUploadInput.value = '';
                 selectedFileNameSpan.textContent = 'No file selected';
@@ -872,25 +922,23 @@
             // --- Content Viewer Functions ---
             function openContentViewer(item) {
                 if (item.type === 'redirect-file' && item.redirectUrl) {
-                    console.log("Attempting to redirect to:", item.redirectUrl); // Debug log
-                    window.open(item.redirectUrl, '_blank'); // Open in new tab
+                    console.log("Attempting to redirect to:", item.redirectUrl);
+                    window.open(item.redirectUrl, '_blank');
                     showMessage(`Redirecting to ${item.name}!`);
-                    return; // Don't show modal for redirect files
+                    return;
                 }
 
-                currentViewerItem = item; // Store the current item
-                originalContent = item.content || `This is content for ${item.name}.`; // Fallback dummy content
+                currentViewerItem = item;
+                originalContent = item.content || `This is content for ${item.name}.`;
 
                 contentViewerTitleSpan.textContent = item.name;
                 contentViewerIcon.setAttribute('data-lucide', item.icon);
                 contentViewerIcon.className = `w-6 h-6 mr-2 ${item.color || 'text-gray-500'}`;
 
-                // Show original content by default
                 displayContentInViewer(originalContent);
-                showOriginalContentBtn.classList.add('hidden'); // Hide original button when showing original
+                showOriginalContentBtn.classList.add('hidden');
 
-                // Show/hide AI buttons based on item type and content existence
-                if (item.type === 'file' || item.type === 'redirect-file') { // Treat redirect-file also as something with "content" in this context
+                if (item.type === 'file' || item.type === 'redirect-file') {
                     summarizeContentBtn.classList.remove('hidden');
                     generateMoreContentBtn.classList.remove('hidden');
                 } else {
@@ -917,13 +965,13 @@
 
             // Function to make Gemini API call with exponential backoff
             async function callGeminiApi(prompt, retries = 3, delay = 1000) {
-                contentViewerLoading.classList.remove('hidden'); // Show loading indicator
+                contentViewerLoading.classList.remove('hidden');
                 for (let i = 0; i < retries; i++) {
                     try {
                         let chatHistory = [];
                         chatHistory.push({ role: "user", parts: [{ text: prompt }] });
                         const payload = { contents: chatHistory };
-                        const apiKey = ""; // Canvas will automatically provide it
+                        const apiKey = "";
                         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
 
                         const response = await fetch(apiUrl, {
@@ -933,7 +981,6 @@
                         });
 
                         if (!response.ok) {
-                            // If not ok, throw error to trigger retry or final catch
                             throw new Error(`HTTP error! status: ${response.status}`);
                         }
 
@@ -950,9 +997,9 @@
                         console.error(`Attempt ${i + 1} failed:`, error);
                         if (i < retries - 1) {
                             await new Promise(res => setTimeout(res, delay));
-                            delay *= 2; // Exponential backoff
+                            delay *= 2;
                         } else {
-                            throw error; // Rethrow after final attempt
+                            throw error;
                         }
                     }
                 }
@@ -965,9 +1012,9 @@
                     return;
                 }
 
-                showOriginalContentBtn.classList.remove('hidden'); // Show button to go back to original
-                summarizeContentBtn.classList.add('hidden'); // Hide summarize button after click
-                generateMoreContentBtn.classList.add('hidden'); // Hide generate button during summarization
+                showOriginalContentBtn.classList.remove('hidden');
+                summarizeContentBtn.classList.add('hidden');
+                generateMoreContentBtn.classList.add('hidden');
 
                 try {
                     const summary = await callGeminiApi(`Summarize the following content concisely: ${currentViewerItem.content}`);
@@ -979,7 +1026,7 @@
                     displayContentInViewer("Failed to summarize content. Please try again later.");
                     showMessage("Error summarizing content. 😞", 5000);
                 } finally {
-                    contentViewerLoading.classList.add('hidden'); // Hide loading indicator
+                    contentViewerLoading.classList.add('hidden');
                 }
             });
 
@@ -990,9 +1037,9 @@
                     return;
                 }
 
-                showOriginalContentBtn.classList.remove('hidden'); // Show button to go back to original
-                summarizeContentBtn.classList.add('hidden'); // Hide summarize button during generation
-                generateMoreContentBtn.classList.add('hidden'); // Hide generate button after click
+                showOriginalContentBtn.classList.remove('hidden');
+                summarizeContentBtn.classList.add('hidden');
+                generateMoreContentBtn.classList.add('hidden');
 
                 try {
                     const newContent = await callGeminiApi(`Expand on the following content, adding more detail and depth: "${currentViewerItem.content}"`);
@@ -1003,7 +1050,7 @@
                     displayContentInViewer("Failed to generate more content. Please try again later.");
                     showMessage("Error generating more content. 😞", 5000);
                 } finally {
-                    contentViewerLoading.classList.add('hidden'); // Hide loading indicator
+                    contentViewerLoading.classList.add('hidden');
                 }
             });
 
@@ -1011,42 +1058,45 @@
             showOriginalContentBtn.addEventListener('click', () => {
                 if (currentViewerItem) {
                     displayContentInViewer(originalContent);
-                    showOriginalContentBtn.classList.add('hidden'); // Hide itself
-                    summarizeContentBtn.classList.remove('hidden'); // Show summarize button
-                    generateMoreContentBtn.classList.remove('hidden'); // Show generate button
+                    showOriginalContentBtn.classList.add('hidden');
+                    summarizeContentBtn.classList.remove('hidden');
+                    generateMoreContentBtn.classList.remove('hidden');
                 }
             });
 
 
-            // Function to toggle starred status in local data
-            function toggleStarredStatus(fileId, currentStarredStatus) {
-                const fileIndex = allFiles.findIndex(f => f.id === fileId);
-                if (fileIndex > -1) {
-                    allFiles[fileIndex].isStarred = !currentStarredStatus;
-                    allFiles[fileIndex].modified = new Date(); // Update modified timestamp
-                    showMessage(`File ${!currentStarredStatus ? 'starred' : 'unstarred'}! (Local change)`);
-                    // Re-render the current view to reflect the change
-                    if (currentSection === 'my-drive') {
-                        renderMyDriveContent();
-                    } else {
-                        handleSidebarNavigation(currentSection);
-                    }
+            // Function to toggle starred status in Firestore
+            async function toggleStarredStatus(fileId, currentStarredStatus) {
+                if (!window.db || !window.userId) {
+                    showMessage("App not ready, cannot update star status.");
+                    return;
+                }
+                try {
+                    const fileDocRef = doc(window.db, `artifacts/${appId}/users/${window.userId}/files`, fileId);
+                    await updateDoc(fileDocRef, {
+                        isStarred: !currentStarredStatus,
+                        modified: new Date().toISOString() // Update modified timestamp as ISO string
+                    });
+                    showMessage(`File ${!currentStarredStatus ? 'starred' : 'unstarred'} in Firestore!`);
+                    // The onSnapshot listener will automatically re-render the content.
+                } catch (e) {
+                    console.error("Error updating document: ", e);
+                    showMessage("Failed to update starred status in Firestore. 😞");
                 }
             }
 
 
             // --- Render Content for Current Folder in My Drive ---
             function renderMyDriveContent() {
-                // Update header title based on current folder
                 currentSectionTitle.textContent = currentPath[currentPath.length - 1].name;
-                updateDebugSectionDisplay(); // Update debug display
+                updateDebugSectionDisplay();
                 updateBreadcrumbs();
-                breadcrumbsContainer.classList.remove('hidden'); // Show breadcrumbs
+                breadcrumbsContainer.classList.remove('hidden');
 
-                const foldersToRender = allFolders.filter(f => f.parentId === currentParentFolderId);
-                const filesToRender = allFiles.filter(f => f.parentId === currentParentFolderId);
+                // Filter based on `window.allFolders` and `window.allFiles`
+                const foldersToRender = window.allFolders.filter(f => f.parentId === currentParentFolderId);
+                const filesToRender = window.allFiles.filter(f => f.parentId === currentParentFolderId);
 
-                // Apply correct class for grid/list view to the containers
                 folderGrid.classList.toggle('file-list', isListView);
                 folderGrid.classList.toggle('file-grid', !isListView);
                 fileGrid.classList.toggle('file-list', isListView);
@@ -1064,9 +1114,7 @@
                     if (foldersToRender.length > 0) {
                         document.getElementById('folders-container').style.display = 'block';
                         foldersToRender.forEach(folder => {
-                            const modifiedDate = folder.modified instanceof Date
-                                ? folder.modified.toLocaleString()
-                                : 'N/A';
+                            const modifiedDate = folder.modified ? new Date(folder.modified).toLocaleString() : 'N/A';
                             const folderDiv = document.createElement('div');
                             folderDiv.className = `folder-item ${isListView ? 'list-view-item' : ''}`;
                             folderDiv.innerHTML = `
@@ -1075,10 +1123,10 @@
                                 <span class="text-xs ${isListView ? 'modified-date' : 'mt-1'}">${modifiedDate}</span>
                             `;
                             folderDiv.onclick = () => {
-                                console.log("Folder clicked:", folder.name); // Debug log
+                                console.log("Folder clicked:", folder.name);
                                 currentParentFolderId = folder.id;
                                 currentPath.push({ name: folder.name, id: folder.id });
-                                renderMyDriveContent(); // Recurse to render contents of the new folder
+                                renderMyDriveContent();
                             };
                             folderGrid.appendChild(folderDiv);
                         });
@@ -1089,9 +1137,7 @@
                     if (filesToRender.length > 0) {
                         document.getElementById('files-container').style.display = 'block';
                         filesToRender.forEach(file => {
-                            const modifiedDate = file.modified instanceof Date
-                                ? file.modified.toLocaleString()
-                                : 'N/A';
+                            const modifiedDate = file.modified ? new Date(file.modified).toLocaleString() : 'N/A';
                             const fileDiv = document.createElement('div');
                             fileDiv.className = `file-item ${isListView ? 'list-view-item' : ''}`;
                             fileDiv.innerHTML = `
@@ -1100,18 +1146,15 @@
                                 <span class="text-xs ${isListView ? 'modified-date' : 'mt-1'}">${modifiedDate}</span>
                                 <i data-lucide="star" class="star-icon w-5 h-5 ${file.isStarred ? 'text-yellow-400' : 'text-gray-400'}"></i>
                             `;
-                            // Star icon click handler
                             const starIcon = fileDiv.querySelector('.star-icon');
                             starIcon.addEventListener('click', (e) => {
-                                e.stopPropagation(); // Prevent parent item's click event
+                                e.stopPropagation();
                                 toggleStarredStatus(file.id, file.isStarred);
                             });
 
-                            // File item click handler (excluding star)
                             fileDiv.addEventListener('click', (e) => {
-                                // Only open content viewer if the star icon was not clicked
                                 if (!e.target.closest('.star-icon')) {
-                                    console.log("File clicked:", file.name); // Debug log
+                                    console.log("File clicked:", file.name);
                                     openContentViewer(file);
                                 }
                             });
@@ -1121,33 +1164,32 @@
                         document.getElementById('files-container').style.display = 'none';
                     }
                 }
-                lucide.createIcons(); // Ensure icons for newly rendered items are created
+                lucide.createIcons();
             }
 
             // Function to update breadcrumbs
             function updateBreadcrumbs() {
-                breadcrumbsContainer.innerHTML = ''; // Clear existing breadcrumbs
+                breadcrumbsContainer.innerHTML = '';
 
                 currentPath.forEach((pathItem, index) => {
                     const span = document.createElement('span');
                     if (index > 0) {
                         const separator = document.createElement('span');
-                        separator.className = 'mx-2'; /* Removed specific text-gray-400 to inherit from parent */
+                        separator.className = 'mx-2';
                         separator.textContent = '>';
                         breadcrumbsContainer.appendChild(separator);
                     }
                     const link = document.createElement('a');
                     link.href = '#';
                     link.className = 'hover:underline';
-                    if (index === currentPath.length - 1) { // Last item in path is not a link
-                        link.className += ' cursor-default no-underline'; /* Removed specific text-gray-800 */
-                        link.onclick = (e) => e.preventDefault(); // Disable click for current folder
+                    if (index === currentPath.length - 1) {
+                        link.className += ' cursor-default no-underline';
+                        link.onclick = (e) => e.preventDefault();
                     } else {
                         link.className += ' text-blue-600';
                         link.onclick = (e) => {
                             e.preventDefault();
-                            // Navigate up to this path item
-                            currentPath.splice(index + 1); // Remove subsequent path items
+                            currentPath.splice(index + 1);
                             currentParentFolderId = pathItem.id;
                             renderMyDriveContent();
                         };
@@ -1159,42 +1201,35 @@
 
             // --- Handles sidebar navigation (My Drive, Shared, Starred, Recent, Settings) ---
             function handleSidebarNavigation(section) {
-                console.log("handleSidebarNavigation called with section:", section); // Debug log
-                currentSection = section; // Update global currentSection
-                updateDebugSectionDisplay(); // Update debug display
-                searchInput.value = ''; // Reset search input
+                console.log("handleSidebarNavigation called with section:", section);
+                currentSection = section;
+                updateDebugSectionDisplay();
+                searchInput.value = '';
 
-                // Close any open modals before navigating
                 hideSettingsModal();
                 hideManageContentModal();
-                hideAccountSecurityModal(); // Close account security modal
+                hideAccountSecurityModal();
                 closeContentViewer();
 
-
-                // Specific handling for "Settings" section - now primarily for opening modal
                 if (section === 'settings') {
                     showSettingsModal();
-                    // Just show a message in the main content area for the settings section itself
                     folderGrid.innerHTML = '';
                     fileGrid.innerHTML = '<p class="text-gray-500">Open the Settings panel to manage your Synapse preferences.</p>';
-                    document.getElementById('folders-container').style.display = 'none'; // Hide folders title
-                    document.getElementById('files-container').style.display = 'block'; // Keep files container for the message
+                    document.getElementById('folders-container').style.display = 'none';
+                    document.getElementById('files-container').style.display = 'block';
                     currentSectionTitle.textContent = 'Settings';
-                    breadcrumbsContainer.classList.add('hidden'); // Hide breadcrumbs for settings
-                    return; // Exit, as settings modal handles further interaction
+                    breadcrumbsContainer.classList.add('hidden');
+                    return;
                 }
 
-
-                // Reset My Drive view if navigating from another section to My Drive
                 if (section === 'my-drive') {
-                    currentParentFolderId = null; // Reset to root
-                    currentPath = [{ name: 'My Drive', id: null }]; // Reset breadcrumbs
-                    renderMyDriveContent(); // Render My Drive's hierarchical content
-                    return; // Exit, as My Drive rendering is handled separately
+                    currentParentFolderId = null;
+                    currentPath = [{ name: 'My Drive', id: null }];
+                    renderMyDriveContent();
+                    return;
                 }
 
-                // For other sections (Shared, Starred, Recent), treat them as flat lists
-                breadcrumbsContainer.classList.add('hidden'); // Hide breadcrumbs for flat views
+                breadcrumbsContainer.classList.add('hidden');
                 let foldersToShow = [];
                 let filesToShow = [];
                 let title = '';
@@ -1202,40 +1237,38 @@
                 switch (section) {
                     case 'shared-with-me':
                         title = 'Shared with me';
-                        filesToShow = allFiles.filter(f => f.name.includes('Report') || f.name.includes('Budget')).slice(0, 3);
+                        filesToShow = window.allFiles.filter(f => f.name.includes('Report') || f.name.includes('Budget')).slice(0, 3);
                         foldersToShow = [];
                         break;
                     case 'starred':
                         title = 'Starred';
-                        filesToShow = allFiles.filter(f => f.isStarred); // Filter for starred files from local array
-                        foldersToShow = []; // Starred only applies to files here
+                        filesToShow = window.starredFiles;
+                        foldersToShow = [];
                         break;
                     case 'recent':
                         title = 'Recent';
-                        filesToShow = [...allFiles].sort((a, b) => (b.modified.getTime() || 0) - (a.modified.getTime() || 0)).slice(0, 5);
-                        foldersToShow = [...allFolders].sort((a, b) => (b.modified.getTime() || 0) - (a.modified.getTime() || 0)).slice(0, 2);
+                        filesToShow = window.recentFilesFolders.filter(item => item.type === 'file');
+                        foldersToShow = window.recentFilesFolders.filter(item => item.type === 'folder');
                         break;
                     default:
-                        console.warn("handleSidebarNavigation: Unknown section encountered, defaulting title. Section received:", section); // Debug log for default case
+                        console.warn("handleSidebarNavigation: Unknown section encountered, defaulting title. Section received:", section);
                         title = 'Unknown Section';
                         break;
                 }
 
-                console.log("handleSidebarNavigation: Setting currentSectionTitle to:", title); // Debug log
+                console.log("handleSidebarNavigation: Setting currentSectionTitle to:", title);
                 currentSectionTitle.textContent = title;
-                console.log("handleSidebarNavigation: currentSectionTitle after assignment:", currentSectionTitle.textContent); // Debug log
+                console.log("handleSidebarNavigation: currentSectionTitle after assignment:", currentSectionTitle.textContent);
 
                 renderFlatContent(foldersToShow, filesToShow);
             }
 
             // A helper function to render content for flat sections (non-My Drive)
             function renderFlatContent(foldersToRender, filesToRender) {
-                // Apply correct class for grid/list view to the containers
                 folderGrid.classList.toggle('file-list', isListView);
                 folderGrid.classList.toggle('file-grid', !isListView);
                 fileGrid.classList.toggle('file-list', isListView);
                 fileGrid.classList.toggle('file-grid', !isListView);
-
 
                 folderGrid.innerHTML = '';
                 fileGrid.innerHTML = '';
@@ -1248,9 +1281,7 @@
                     if (foldersToRender.length > 0) {
                         document.getElementById('folders-container').style.display = 'block';
                         foldersToRender.forEach(folder => {
-                            const modifiedDate = folder.modified instanceof Date
-                                ? folder.modified.toLocaleString()
-                                : 'N/A';
+                            const modifiedDate = folder.modified ? new Date(folder.modified).toLocaleString() : 'N/A';
                             const folderDiv = document.createElement('div');
                             folderDiv.className = `folder-item ${isListView ? 'list-view-item' : ''}`;
                             folderDiv.innerHTML = `
@@ -1259,8 +1290,8 @@
                                 <span class="text-xs ${isListView ? 'modified-date' : 'mt-1'}">${modifiedDate}</span>
                             `;
                             folderDiv.onclick = () => {
-                                console.log("Folder clicked (flat view):", folder.name); // Debug log
-                                showMessage(`Folder clicked (in ${currentSection}): ${folder.name}`); // Just show message for non-My Drive folders
+                                console.log("Folder clicked (flat view):", folder.name);
+                                showMessage(`Folder clicked (in ${currentSection}): ${folder.name}`);
                             };
                             folderGrid.appendChild(folderDiv);
                         });
@@ -1271,9 +1302,7 @@
                     if (filesToRender.length > 0) {
                         document.getElementById('files-container').style.display = 'block';
                         filesToRender.forEach(file => {
-                            const modifiedDate = file.modified instanceof Date
-                                ? file.modified.toLocaleString()
-                                : 'N/A';
+                            const modifiedDate = file.modified ? new Date(file.modified).toLocaleString() : 'N/A';
                             const fileDiv = document.createElement('div');
                             fileDiv.className = `file-item ${isListView ? 'list-view-item' : ''}`;
                             fileDiv.innerHTML = `
@@ -1282,16 +1311,15 @@
                                 <span class="text-xs ${isListView ? 'modified-date' : 'mt-1'}">${modifiedDate}</span>
                                 <i data-lucide="star" class="star-icon w-5 h-5 ${file.isStarred ? 'text-yellow-400' : 'text-gray-400'}"></i>
                             `;
-                            // Star icon click handler
                             const starIcon = fileDiv.querySelector('.star-icon');
                             starIcon.addEventListener('click', (e) => {
-                                e.stopPropagation(); // Prevent parent item's click event
+                                e.stopPropagation();
                                 toggleStarredStatus(file.id, file.isStarred);
                             });
 
                             fileDiv.onclick = (e) => {
                                 if (!e.target.closest('.star-icon')) {
-                                    console.log("File clicked (flat view):", file.name); // Debug log
+                                    console.log("File clicked (flat view):", file.name);
                                     openContentViewer(file);
                                 }
                             };
@@ -1306,19 +1334,31 @@
 
             // Function to populate initial data (replaces Firebase data fetching)
             async function ensureEaglercraftContent() {
-                let eaglercraftFolder = allFolders.find(f => f.name === 'eaglercraft' && f.parentId === null);
+                if (!window.db || !window.userId) {
+                    console.warn("Firebase not ready for ensureEaglercraftContent.");
+                    return;
+                }
 
-                if (!eaglercraftFolder) {
-                    eaglercraftFolder = {
-                        id: generateUniqueId(),
+                const userFoldersRef = collection(window.db, `artifacts/${appId}/users/${window.userId}/folders`);
+                const userFilesRef = collection(window.db, `artifacts/${appId}/users/${window.userId}/files`);
+
+                // Check if eaglercraft folder already exists in Firestore
+                const existingFoldersSnapshot = await getDocs(query(userFoldersRef, where("name", "==", "eaglercraft"), where("parentId", "==", null)));
+                let eaglercraftFolderId;
+
+                if (existingFoldersSnapshot.empty) {
+                    const newFolderDoc = await addDoc(userFoldersRef, {
                         name: 'eaglercraft',
                         type: 'folder',
                         icon: 'folder',
-                        modified: new Date(),
-                        parentId: null
-                    };
-                    allFolders.push(eaglercraftFolder);
-                    showMessage('Created "eaglercraft" folder.');
+                        modified: new Date().toISOString(),
+                        parentId: null,
+                        ownerId: window.userId
+                    });
+                    eaglercraftFolderId = newFolderDoc.id;
+                    showMessage('Created "eaglercraft" folder in Firestore.');
+                } else {
+                    eaglercraftFolderId = existingFoldersSnapshot.docs[0].id;
                 }
 
                 const eaglercraftFileRedirects = {
@@ -1343,45 +1383,43 @@
 
                 for (const fileName in eaglercraftFileRedirects) {
                     const redirectUrl = eaglercraftFileRedirects[fileName];
-                    const fileExists = allFiles.some(f =>
-                        f.name === fileName &&
-                        f.type === 'redirect-file' &&
-                        f.parentId === eaglercraftFolder.id
-                    );
-                    const shouldBeStarred = defaultStarredFiles.includes(fileName);
+                    const existingFilesSnapshot = await getDocs(query(userFilesRef, where("name", "==", fileName), where("parentId", "==", eaglercraftFolderId)));
 
-                    if (!fileExists) {
+                    if (existingFilesSnapshot.empty) {
+                        const shouldBeStarred = defaultStarredFiles.includes(fileName);
                         const newFile = {
-                            id: generateUniqueId(),
                             name: fileName,
                             type: 'redirect-file',
                             icon: 'link',
                             color: 'text-green-700',
-                            modified: new Date(),
+                            modified: new Date().toISOString(),
                             content: `This is dummy content for "${fileName}". It simulates content you might find in a file.`,
-                            redirectUrl: redirectUrl, // Assign unique redirect URL
-                            parentId: eaglercraftFolder.id,
-                            isStarred: shouldBeStarred
+                            redirectUrl: redirectUrl,
+                            parentId: eaglercraftFolderId,
+                            isStarred: shouldBeStarred,
+                            ownerId: window.userId
                         };
-                        allFiles.push(newFile);
-                        showMessage(`Created "${fileName}" file.`);
+                        await addDoc(userFilesRef, newFile);
+                        showMessage(`Created "${fileName}" file in Firestore.`);
                     } else {
-                        // Update starred status and redirect URL if necessary for existing files
-                        const existingFile = allFiles.find(f => f.name === fileName && f.parentId === eaglercraftFolder.id);
-                        if (existingFile) {
-                            let updated = false;
-                            if (existingFile.isStarred !== shouldBeStarred) {
-                                existingFile.isStarred = shouldBeStarred;
-                                updated = true;
-                            }
-                            if (existingFile.redirectUrl !== redirectUrl) {
-                                existingFile.redirectUrl = redirectUrl;
-                                updated = true;
-                            }
-                            if (updated) {
-                                existingFile.modified = new Date();
-                                showMessage(`Updated "${fileName}" details.`);
-                            }
+                        const fileDoc = existingFilesSnapshot.docs[0];
+                        const currentData = fileDoc.data();
+                        let updatedData = {};
+                        let changed = false;
+
+                        const shouldBeStarred = defaultStarredFiles.includes(fileName);
+                        if (currentData.isStarred !== shouldBeStarred) {
+                            updatedData.isStarred = shouldBeStarred;
+                            changed = true;
+                        }
+                        if (currentData.redirectUrl !== redirectUrl) {
+                            updatedData.redirectUrl = redirectUrl;
+                            changed = true;
+                        }
+                        if (changed) {
+                            updatedData.modified = new Date().toISOString();
+                            await updateDoc(fileDoc.ref, updatedData);
+                            showMessage(`Updated "${fileName}" details in Firestore.`);
                         }
                     }
                 }
@@ -1405,80 +1443,96 @@
             searchInput.addEventListener('input', () => {
                 const query = searchInput.value.toLowerCase();
                 if (currentSection === 'my-drive') {
-                    // Search only within the current folder's contents if in My Drive
-                    const filteredFolders = allFolders.filter(folder =>
+                    const filteredFolders = window.allFolders.filter(folder =>
                         folder.parentId === currentParentFolderId && folder.name.toLowerCase().includes(query)
                     );
-                    const filteredFiles = allFiles.filter(file =>
+                    const filteredFiles = window.allFiles.filter(file =>
                         file.parentId === currentParentFolderId && file.name.toLowerCase().includes(query)
                     );
-                    renderFlatContent(filteredFolders, filteredFiles); // Use flat render for search results temporarily
+                    renderFlatContent(filteredFolders, filteredFiles);
                 } else {
-                    // For other sections, search the entire flat list
-                    const filteredFolders = allFolders.filter(folder =>
-                        folder.name.toLowerCase().includes(query)
+                    let itemsToSearch = [];
+                    if (currentSection === 'starred') {
+                        itemsToSearch = window.starredFiles;
+                    } else if (currentSection === 'recent') {
+                        itemsToSearch = window.recentFilesFolders;
+                    } else if (currentSection === 'shared-with-me') {
+                        itemsToSearch = window.allFiles.filter(f => f.name.includes('Report') || f.name.includes('Budget'));
+                    }
+
+                    const filteredFolders = itemsToSearch.filter(item =>
+                        item.type === 'folder' && item.name.toLowerCase().includes(query)
                     );
-                    const filteredFiles = allFiles.filter(file =>
-                        file.name.toLowerCase().includes(query)
+                    const filteredFiles = itemsToSearch.filter(item =>
+                        item.type === 'file' && item.name.toLowerCase().includes(query)
                     );
                     renderFlatContent(filteredFolders, filteredFiles);
                 }
             });
 
+
             // View Toggle Button Listener (now in sidebar)
             viewToggleSidebarBtn.addEventListener('click', (e) => {
-                e.preventDefault(); // Prevent default link behavior
-                isListView = !isListView; // Toggle the view state
-                // Update the button icon and text
+                e.preventDefault();
+                isListView = !isListView;
                 if (isListView) {
                     viewToggleSidebarBtn.innerHTML = '<i data-lucide="list" class="w-5 h-5 mr-3"></i><span id="view-mode-text">List View</span>';
                 } else {
                     viewToggleSidebarBtn.innerHTML = '<i data-lucide="layout-grid" class="w-5 h-5 mr-3"></i><span id="view-mode-text">Grid View</span>';
                 }
-                lucide.createIcons(); // Re-render icon
-                // Re-render content based on the updated view
+                lucide.createIcons();
                 if (currentSection === 'my-drive') {
                     renderMyDriveContent();
                 } else {
-                    // When view mode is toggled for sections other than 'my-drive', re-call handleSidebarNavigation
-                    // to ensure the correct content is filtered and rendered for the active section.
                     handleSidebarNavigation(currentSection);
                 }
-                updateDebugSectionDisplay(); // Update debug display after view toggle
+                updateDebugSectionDisplay();
             });
 
-            // New: "New" button in sidebar opens settings modal
+            // "New" button in sidebar opens settings modal
             newButton.addEventListener('click', showSettingsModal);
 
             // Theme Toggle Button Listener (now in settings modal)
             themeToggleSettingsBtn.addEventListener('click', (e) => {
-                e.preventDefault(); // Prevent default link behavior
+                e.preventDefault();
                 document.body.classList.toggle('theme-drive');
-                lucide.createIcons(); // Re-render icons in newly themed elements
+                lucide.createIcons();
             });
 
             // Settings Modal Listeners
             closeSettingsModalBtn.addEventListener('click', hideSettingsModal);
             openManageContentModalBtn.addEventListener('click', () => {
-                hideSettingsModal(); // Close settings modal
-                showManageContentModal(); // Open manage content modal
+                hideSettingsModal();
+                showManageContentModal();
             });
             openAccountSecurityModalBtn.addEventListener('click', () => {
-                hideSettingsModal(); // Close settings modal
-                showAccountSecurityModal(); // Open account security modal
+                hideSettingsModal();
+                showAccountSecurityModal();
             });
 
             // Account Security Modal Listeners
             closeAccountSecurityModalBtn.addEventListener('click', hideAccountSecurityModal);
+            // New: Google Sign-in button listener
+            googleSignInBtn.addEventListener('click', async () => {
+                try {
+                    const provider = new GoogleAuthProvider();
+                    await signInWithPopup(window.auth, provider);
+                    showMessage("Signed in with Google successfully! 🎉", 4000);
+                    hideAccountSecurityModal(); // Close modal after successful sign-in
+                } catch (error) {
+                    console.error("Error signing in with Google:", error);
+                    showMessage(`Google Sign-in failed: ${error.message}. 😞`, 5000);
+                }
+            });
 
 
             // Manage Content Modal Listeners
             closeManageContentModalBtn.addEventListener('click', hideManageContentModal);
 
             // Create Dummy File button
-            createDummyFileBtn.addEventListener('click', () => {
+            createDummyFileBtn.addEventListener('click', async () => {
                 const name = itemNameInput.value.trim();
-                const link = itemLinkInput.value.trim(); // Get value from new link input
+                const link = itemLinkInput.value.trim();
 
                 if (!name) {
                     showMessage('Please enter a name for the dummy file.');
@@ -1490,17 +1544,16 @@
                     return;
                 }
 
-                let fileType = 'file';
-                let fileIcon = '';
-                let fileColor = '';
-                let fileContent = '';
-                let redirectUrl = undefined; // Initialize as undefined
+                let fileType;
+                let fileIcon;
+                let fileColor;
+                let fileContent;
+                let redirectUrl; // Declare outside the if/else for broader scope
 
                 if (link) {
-                    // Validate and ensure protocol for the link
                     let validLink = link;
                     if (!link.startsWith('http://') && !link.startsWith('https://')) {
-                        validLink = `https://${link}`; // Prepend https:// if missing
+                        validLink = `https://${link}`;
                     }
                     fileType = 'redirect-file';
                     fileIcon = 'link';
@@ -1508,35 +1561,40 @@
                     fileContent = `This dummy file redirects to: ${validLink}`;
                     redirectUrl = validLink;
                 } else {
-                    // Otherwise, it's a regular dummy file
                     const { icon, color } = getFileIconAndColor(name);
                     fileType = 'file';
                     fileIcon = icon;
                     fileColor = color;
                     fileContent = `This is dummy content for the file "${name}". No actual file data is stored.`;
+                    // redirectUrl remains undefined if no link is provided
                 }
 
+                // Now construct the newFile object after all properties are determined
                 const newFile = {
-                    id: generateUniqueId(),
                     name: name,
                     type: fileType,
                     icon: fileIcon,
                     color: fileColor,
-                    modified: new Date(),
+                    modified: new Date().toISOString(),
                     content: fileContent,
-                    redirectUrl: redirectUrl, // This will be undefined if no link is provided
-                    parentId: currentParentFolderId, // Assign to current folder
-                    isStarred: false // Initialize isStarred for new files
+                    redirectUrl: redirectUrl, // This will be undefined if no link was provided
+                    parentId: currentParentFolderId,
+                    isStarred: false,
+                    ownerId: window.userId
                 };
 
-                allFiles.push(newFile);
-                showMessage(`Dummy file "${name}" created successfully! (Local storage only)`);
-                renderMyDriveContent(); // Re-render to show new file
-                hideManageContentModal();
+                try {
+                    await addDoc(collection(window.db, `artifacts/${appId}/users/${window.userId}/files`), newFile);
+                    showMessage(`Dummy file "${name}" created successfully in Firestore!`);
+                    hideManageContentModal();
+                } catch (e) {
+                    console.error("Error adding document: ", e);
+                    showMessage("Failed to create file in Firestore. 😞");
+                }
             });
 
             // Create Folder button
-            createFolderBtn.addEventListener('click', () => {
+            createFolderBtn.addEventListener('click', async () => {
                 const name = itemNameInput.value.trim();
                 if (!name) {
                     showMessage('Please enter a name for the folder.');
@@ -1549,18 +1607,22 @@
                 }
 
                 const newFolder = {
-                    id: generateUniqueId(),
                     name: name,
                     type: 'folder',
                     icon: 'folder',
-                    modified: new Date(),
-                    parentId: currentParentFolderId // Assign to current folder
+                    modified: new Date().toISOString(),
+                    parentId: currentParentFolderId,
+                    ownerId: window.userId
                 };
 
-                allFolders.push(newFolder);
-                showMessage(`Folder "${name}" created successfully! (Local storage only)`);
-                renderMyDriveContent(); // Re-render to show new folder
-                hideManageContentModal();
+                try {
+                    await addDoc(collection(window.db, `artifacts/${appId}/users/${window.userId}/folders`), newFolder);
+                    showMessage(`Folder "${name}" created successfully in Firestore!`);
+                    hideManageContentModal();
+                } catch (e) {
+                    console.error("Error adding document: ", e);
+                    showMessage("Failed to create folder in Firestore. 😞");
+                }
             });
 
             // Trigger file input click when "Select File" button is clicked
@@ -1573,7 +1635,7 @@
                 if (e.target.files.length > 0) {
                     selectedFile = e.target.files[0];
                     selectedFileNameSpan.textContent = selectedFile.name;
-                    uploadFileBtn.disabled = false; // Enable upload button
+                    uploadFileBtn.disabled = false;
                 } else {
                     selectedFile = null;
                     selectedFileNameSpan.textContent = 'No file selected';
@@ -1582,7 +1644,7 @@
             });
 
             // Handle actual file upload (simulated)
-            uploadFileBtn.addEventListener('click', () => {
+            uploadFileBtn.addEventListener('click', async () => {
                 if (!selectedFile) {
                     showMessage('Please select a file to upload.');
                     return;
@@ -1596,22 +1658,26 @@
                 const { icon, color } = getFileIconAndColor(selectedFile.name);
 
                 const uploadedFileRecord = {
-                    id: generateUniqueId(),
                     name: selectedFile.name,
                     type: 'file',
                     icon: icon,
                     color: color,
-                    modified: new Date(),
-                    size: selectedFile.size, // Store file size
+                    modified: new Date().toISOString(),
+                    size: selectedFile.size,
                     content: `This is a simulated content for the uploaded file "${selectedFile.name}". It has a size of ${(selectedFile.size / 1024).toFixed(2)} KB. No actual binary data is stored.`,
-                    parentId: currentParentFolderId, // Assign to current folder
-                    isStarred: false // Initialize isStarred for uploaded files
+                    parentId: currentParentFolderId,
+                    isStarred: false,
+                    ownerId: window.userId
                 };
 
-                allFiles.push(uploadedFileRecord);
-                showMessage(`File "${selectedFile.name}" uploaded successfully! (Simulated, local storage only)`);
-                renderMyDriveContent(); // Re-render to show new file
-                hideManageContentModal(); // Hide after upload
+                try {
+                    await addDoc(collection(window.db, `artifacts/${appId}/users/${window.userId}/files`), uploadedFileRecord);
+                    showMessage(`File "${selectedFile.name}" uploaded successfully to Firestore! (Simulated)`);
+                    hideManageContentModal();
+                } catch (e) {
+                    console.error("Error uploading file: ", e);
+                    showMessage("Failed to upload file to Firestore. 😞");
+                }
             });
 
             // Close content viewer button
@@ -1622,7 +1688,7 @@
                 if (e.key === 'Escape') {
                     if (manageContentModal.classList.contains('show')) {
                         hideManageContentModal();
-                    } else if (accountSecurityModal.classList.contains('show')) { // Check new modal
+                    } else if (accountSecurityModal.classList.contains('show')) {
                         hideAccountSecurityModal();
                     }
                     else if (settingsModal.classList.contains('show')) {
@@ -1633,10 +1699,59 @@
                 }
             });
 
-            // Initial call to start the app
-            initializeAppData();
-        });
-    </script>
-</body>
-</html>
+            // --- Firestore Real-time Listeners Setup ---
+            function setupFirestoreListeners() {
+                if (!window.db || !window.userId) {
+                    console.warn("Firestore or userId not available for listeners.");
+                    return;
+                }
+
+                const userFoldersRef = collection(window.db, `artifacts/${appId}/users/${window.userId}/folders`);
+                const userFilesRef = collection(window.db, `artifacts/${appId}/users/${window.userId}/files`);
+
+                // Listener for ALL folders for the user
+                onSnapshot(userFoldersRef, (snapshot) => {
+                    window.allFolders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    console.log("All Folders updated from Firestore:", window.allFolders);
+                    // Re-render relevant section if active
+                    if (currentSection === 'my-drive') {
+                        renderMyDriveContent();
+                    } else if (currentSection === 'recent') {
+                         // Re-calculate recent files/folders if folders change
+                        const files = window.allFiles.map(doc => ({ id: doc.id, ...doc.data() }));
+                        const folders = window.allFolders.map(doc => ({ id: doc.id, ...doc.data() }));
+                        window.recentFilesFolders = [...files, ...folders].sort((a, b) => {
+                            const dateA = new Date(a.modified || 0);
+                            const dateB = new Date(b.modified || 0);
+                            return dateB.getTime() - dateA.getTime();
+                        }).slice(0, 10);
+                        handleSidebarNavigation('recent');
+                    }
+                }, (error) => console.error("Error listening to all folders:", error));
+
+                // Listener for ALL files for the user
+                onSnapshot(userFilesRef, (snapshot) => {
+                    window.allFiles = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    console.log("All Files updated from Firestore:", window.allFiles);
+                    // Re-render relevant section if active
+                    if (currentSection === 'my-drive') {
+                        renderMyDriveContent();
+                    } else if (currentSection === 'starred') {
+                        window.starredFiles = window.allFiles.filter(f => f.isStarred === true);
+                        handleSidebarNavigation('starred');
+                    } else if (currentSection === 'recent') {
+                        // Re-calculate recent files/folders if files change
+                        const files = window.allFiles.map(doc => ({ id: doc.id, ...doc.data() }));
+                        const folders = window.allFolders.map(doc => ({ id: doc.id, ...doc.data() }));
+                        window.recentFilesFolders = [...files, ...folders].sort((a, b) => {
+                            const dateA = new Date(a.modified || 0);
+                            const dateB = new Date(b.modified || 0);
+                            return dateB.getTime() - dateA.getTime();
+                        }).slice(0, 10);
+                        handleSidebarNavigation('recent');
+                    } else if (currentSection === 'shared-with-me') {
+                        // Re-render shared if files change
+                        handleSidebarNavigation('shared-with-me');
+                    }
+                }, (error) => console.error("Error listening to all files:", error));
 
