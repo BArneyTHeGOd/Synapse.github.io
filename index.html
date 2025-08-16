@@ -687,6 +687,21 @@
             });
         }
 
+        // Show a transient message - Moved to global scope
+        function showMessage(message, duration = 3000) {
+            const messageBox = document.getElementById('message-box');
+            if (messageBox) { // Check if element exists before manipulating
+                messageBox.textContent = message;
+                messageBox.classList.add('show');
+                setTimeout(() => {
+                    messageBox.classList.remove('show');
+                }, duration);
+            } else {
+                console.warn("Message box element not found:", message);
+            }
+        }
+
+
         // Firebase SDK Imports and Initialization
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -703,11 +718,20 @@
         window.starredFiles = []; // To store starred files for the 'Starred' section
         window.recentFilesFolders = []; // To store recent files/folders for the 'Recent' section
 
-        // Global variables provided by the Canvas environment.
-        // They are crucial for initializing Firebase within this specific platform.
-        // Ensure they are correctly accessed with fallback for local development.
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        // ⭐ IMPORTANT: This appId is now hardcoded to match your Firebase project ID.
+        const appId = 'synapse-b502f';
+        
+        // ⭐ IMPORTANT: This firebaseConfig has been updated with your provided values.
+        const firebaseConfig = {
+            apiKey: "AIzaSyCXzc_O-Tjumvm1hGIrmfCzvENcggQxto4",
+            authDomain: "synapse-b502f.firebaseapp.com",
+            projectId: "synapse-b502f",
+            storageBucket: "synapse-b502f.firebasestorage.app",
+            messagingSenderId: "706501405765",
+            appId: "1:706501405765:web:5c07d6586944883dba472c",
+            measurementId: "G-6F04N4YKC0"
+        };
+
 
         document.addEventListener('DOMContentLoaded', async () => {
             lucide.createIcons(); // Initialize Lucide Icons immediately
@@ -727,14 +751,11 @@
 
                 console.log("Firebase App Initialized.");
 
-                // Authenticate user initially with custom token or anonymously
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(window.auth, __initial_auth_token);
-                    console.log("Signed in with custom token.");
-                } else {
-                    await signInAnonymously(window.auth);
-                    console.log("Signed in anonymously.");
-                }
+                // Authenticate user anonymously. The __initial_auth_token is specific to Canvas
+                // and should not be used for external deployments like GitHub Pages.
+                await signInAnonymously(window.auth);
+                console.log("Signed in anonymously.");
+                
 
                 // Use a promise to ensure auth state is settled before proceeding
                 const userAuthPromise = new Promise(resolve => {
@@ -744,7 +765,8 @@
                             document.getElementById('user-id-display').textContent = `User ID: ${window.userId}`;
                             console.log("Firebase Auth State Changed. User ID:", window.userId);
                         } else {
-                            window.userId = crypto.randomUUID();
+                            // This case handles a logout or if anonymous sign-in failed/wasn't attempted
+                            window.userId = crypto.randomUUID(); // Fallback to a local random ID
                             document.getElementById('user-id-display').textContent = `User ID: Anonymous (local ID: ${window.userId.substring(0, 8)}...)`;
                             console.log("Firebase Auth State Changed. No user, using anonymous ID:", window.userId);
                         }
@@ -767,6 +789,7 @@
 
             } catch (error) {
                 console.error("Critical Error initializing Firebase or signing in:", error);
+                // Now showMessage is defined globally
                 showMessage("Failed to initialize app. Please check console for details.", 8000);
                 // Fallback to purely local data if Firebase initialization fails
                 window.userId = crypto.randomUUID();
@@ -846,15 +869,6 @@
 
 
             // --- Utility Functions ---
-
-            // Show a transient message
-            function showMessage(message, duration = 3000) {
-                messageBox.textContent = message;
-                messageBox.classList.add('show');
-                setTimeout(() => {
-                    messageBox.classList.remove('show');
-                }, duration);
-            }
 
             // Get icon and color based on file extension
             function getFileIconAndColor(fileName) {
@@ -987,7 +1001,8 @@
                         let chatHistory = [];
                         chatHistory.push({ role: "user", parts: [{ text: prompt }] });
                         const payload = { contents: chatHistory };
-                        const apiKey = "";
+                        // ⭐ IMPORTANT: Gemini API Key inserted here
+                        const apiKey = "AIzaSyDiT1oPC6fWJ92t0spL05BwWIN9UDafp3E"; 
                         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
 
                         const response = await fetch(apiUrl, {
