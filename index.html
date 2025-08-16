@@ -11,19 +11,73 @@
     <!-- Lucide Icons CDN -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
+        :root {
+            /* Default (Pinterest-inspired Light) Theme Variables */
+            --bg-primary: #F7F9FA; /* Very light gray background */
+            --bg-secondary: white; /* For sidebar, header, cards */
+            --text-primary: #3C4043; /* Darker gray for main text */
+            --text-secondary: #70757A; /* Lighter gray for secondary text, icons */
+            --border-color: #E8EAED;
+            --item-border: #E8EAED;
+            --item-hover-bg: #F0F4F9; /* Light hover for items */
+            --sidebar-active-bg: #E8F0FE; /* Active sidebar background */
+            --sidebar-active-text: #1A73E8; /* Google blue for active sidebar text/icon */
+            --search-bg: #E8EAED; /* Search bar background */
+            --search-border: #BDC1C6; /* Search bar border */
+            --button-primary-bg: #1A73E8; /* Google blue for primary buttons */
+            --button-primary-hover-bg: #1764cb;
+            --button-secondary-bg: #E8EAED; /* Light gray for secondary buttons */
+            --button-secondary-text: #3C4043;
+            --button-secondary-hover-bg: #DCDCDE;
+            --new-button-bg: #E8F0FE; /* Specific light blue for new button - matches active sidebar */
+            --new-button-text: #1A73E8;
+            --new-button-shadow: 0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.06);
+            --star-yellow: #f59e0b; /* Existing Tailwind yellow-400 */
+            --star-gray: #9ca3af; /* Existing Tailwind gray-400 */
+        }
+
+        body.theme-drive {
+            /* Drive Theme Variables (Darker, Google Drive colors) */
+            --bg-primary: #1F1F1F; /* Dark background */
+            --bg-secondary: #2E2E2E; /* Slightly lighter than primary for cards/header */
+            --text-primary: #E0E0E0; /* Light text on dark bg */
+            --text-secondary: #B0B0B0; /* Slightly dimmer light text */
+            --border-color: #3A3A3A;
+            --item-border: #4A4A4A;
+            --item-hover-bg: #383838;
+            --sidebar-active-bg: #303030;
+            --sidebar-active-text: #4285F4; /* Google Blue */
+            --search-bg: #3A3A3A;
+            --search-border: #5A5A5A;
+            --button-primary-bg: #4285F4; /* Google Blue */
+            --button-primary-hover-bg: #3B72D4;
+            --button-secondary-bg: #5A5A5A;
+            --button-secondary-text: #E0E0E0;
+            --button-secondary-hover-bg: #6A6A6A;
+            --star-yellow: #FBBC04; /* Google Yellow */
+            --star-gray: #777777;
+            --new-button-bg: #4285F4; /* Drive theme's primary blue for new button */
+            --new-button-text: white;
+            --new-button-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f6f7f8; /* Light gray background for the entire page */
+            background-color: var(--bg-primary);
+            color: var(--text-primary); /* Apply default text color */
+            transition: background-color 0.3s ease, color 0.3s ease; /* Smooth theme transition */
         }
         .sidebar {
             width: 280px; /* Fixed width for the sidebar */
             flex-shrink: 0;
-            background-color: white;
-            border-right: 1px solid #e0e0e0;
+            background-color: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            transition: background-color 0.3s ease, border-color 0.3s ease;
         }
         .header {
-            background-color: white;
-            border-bottom: 1px solid #e0e0e0;
+            background-color: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.3s ease, border-color 0.3s ease;
         }
         .file-grid {
             display: grid;
@@ -37,8 +91,8 @@
         }
 
         .file-item, .folder-item {
-            background-color: white;
-            border: 1px solid #dadce0;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--item-border);
             border-radius: 8px;
             padding: 16px;
             display: flex;
@@ -55,7 +109,7 @@
             align-items: center;
             padding: 12px 16px; /* Adjust padding for list view */
             box-shadow: none; /* Remove shadow for a flatter list look */
-            border-bottom: 1px solid #eee; /* Light line separator */
+            border-bottom: 1px solid var(--border-color); /* Light line separator */
             border-radius: 0; /* No rounded corners for list items */
         }
         .file-item.list-view-item:first-child, .folder-item.list-view-item:first-child {
@@ -69,11 +123,11 @@
 
         .file-item:hover, .folder-item:hover {
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            border-color: #a8d5ff; /* Light blue border on hover */
+            border-color: var(--sidebar-active-text); /* Light blue border on hover */
         }
         .file-item.list-view-item:hover, .folder-item.list-view-item:hover {
-             background-color: #f0f4f9; /* Lighter background on hover for list items */
-             border-color: #a8d5ff;
+             background-color: var(--item-hover-bg); /* Lighter background on hover for list items */
+             border-color: var(--sidebar-active-text);
              box-shadow: none; /* Keep shadow off */
         }
 
@@ -84,6 +138,7 @@
             overflow: hidden;
             text-overflow: ellipsis;
             width: 100%; /* Ensure it takes full width for truncation to work */
+            color: var(--text-primary);
         }
         .file-item.list-view-item .file-name, .folder-item.list-view-item .file-name {
             flex-grow: 1; /* Allow name to take available space */
@@ -93,6 +148,7 @@
         .file-item.list-view-item .modified-date, .folder-item.list-view-item .modified-date {
             flex-shrink: 0; /* Prevent date from shrinking */
             margin-left: auto; /* Push to the right */
+            color: var(--text-secondary);
         }
 
         .file-item .star-icon {
@@ -116,39 +172,46 @@
 
 
         .new-button {
-            background-color: white;
-            color: #1a73e8; /* Google blue */
-            box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.06);
+            background-color: var(--new-button-bg);
+            color: var(--new-button-text);
+            box-shadow: var(--new-button-shadow);
             transition: all 0.2s ease-in-out;
         }
         .new-button:hover {
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-            background-color: #f0f4f9; /* Lighter blue on hover */
+            filter: brightness(0.9); /* Slightly darken on hover */
         }
+        .sidebar-item {
+             color: var(--text-secondary);
+        }
+        .sidebar-item svg {
+             color: var(--text-secondary); /* Default icon color */
+        }
+
         .sidebar-item.active {
-            background-color: #e8f0fe; /* Light blue for active item */
-            color: #1a73e8; /* Google blue */
+            background-color: var(--sidebar-active-bg); /* Light blue for active item */
+            color: var(--sidebar-active-text); /* Google blue */
         }
         .sidebar-item.active svg {
-            color: #1a73e8; /* Google blue for icon */
+            color: var(--sidebar-active-text); /* Google blue for icon */
         }
         /* Custom scrollbar for main content area */
         .main-content-scroll {
             overflow-y: auto;
             scrollbar-width: thin; /* Firefox */
-            scrollbar-color: #cbd5e0 #edf2f7; /* thumb and track color */
+            scrollbar-color: var(--item-border) var(--bg-primary); /* thumb and track color */
         }
         .main-content-scroll::-webkit-scrollbar {
             width: 8px;
         }
         .main-content-scroll::-webkit-scrollbar-track {
-            background: #edf2f7; /* Light background for the track */
+            background: var(--bg-primary); /* Light background for the track */
             border-radius: 10px;
         }
         .main-content-scroll::-webkit-scrollbar-thumb {
-            background-color: #cbd5e0; /* Gray for the thumb */
+            background-color: var(--item-border); /* Gray for the thumb */
             border-radius: 10px;
-            border: 2px solid #edf2f7; /* Padding around the thumb */
+            border: 2px solid var(--bg-primary); /* Padding around the thumb */
         }
 
         /* Responsive adjustments for smaller screens */
@@ -157,7 +220,7 @@
                 width: 100%;
                 height: auto;
                 border-right: none;
-                border-bottom: 1px solid #e0e0e0;
+                border-bottom: 1px solid var(--border-color);
             }
             .flex-container {
                 flex-direction: column;
@@ -210,8 +273,8 @@
             position: fixed;
             top: 20px;
             right: 20px;
-            background-color: #333;
-            color: white;
+            background-color: var(--text-primary); /* Darker for popups */
+            color: var(--bg-secondary); /* Light text on popup */
             padding: 12px 20px;
             border-radius: 8px;
             z-index: 1000;
@@ -224,8 +287,8 @@
             opacity: 1;
         }
 
-        /* Admin Panel Styling */
-        .admin-panel-overlay, .content-viewer-overlay, .loading-overlay {
+        /* Modal Overlays (generic for settings, content viewer, and future modals) */
+        .modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
@@ -240,49 +303,21 @@
             visibility: hidden;
             transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
         }
-        .admin-panel-overlay.show, .content-viewer-overlay.show, .loading-overlay.show {
+        .modal-overlay.show {
             opacity: 1;
             visibility: visible;
         }
-        .admin-panel-content, .content-viewer-content {
-            background-color: white;
+        .modal-content {
+            background-color: var(--bg-secondary);
             padding: 24px;
             border-radius: 12px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
             width: 90%;
-            max-width: 400px;
+            max-width: 450px; /* Default width for modals */
             position: relative;
+            color: var(--text-primary);
         }
-        .admin-panel-content input[type="text"] {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            margin-bottom: 16px;
-            font-size: 1rem;
-        }
-        .admin-panel-content button {
-            padding: 10px 18px;
-            border-radius: 8px;
-            font-weight: 500;
-            transition: background-color 0.2s ease-in-out;
-        }
-        .admin-panel-content .btn-primary {
-            background-color: #1a73e8;
-            color: white;
-            margin-right: 12px;
-        }
-        .admin-panel-content .btn-primary:hover {
-            background-color: #1764cb;
-        }
-        .admin-panel-content .btn-secondary {
-            background-color: #f0f0f0;
-            color: #333;
-        }
-        .admin-panel-content .btn-secondary:hover {
-            background-color: #e0e0e0;
-        }
-        .admin-panel-close, .content-viewer-close {
+        .modal-close {
             position: absolute;
             top: 12px;
             right: 12px;
@@ -293,11 +328,13 @@
             border-radius: 50%;
             transition: background-color 0.2s ease-in-out;
         }
-        .admin-panel-close:hover, .content-viewer-close:hover {
-            background-color: #f0f0f0;
+        .modal-close:hover {
+            background-color: var(--item-hover-bg);
         }
 
-        .content-viewer-content {
+
+        /* Specific styles for content viewer if needed, overriding modal-content */
+        #content-viewer .modal-content {
             max-width: 600px; /* Wider for content viewing */
             max-height: 80vh; /* Max height to allow scrolling */
             overflow-y: auto;
@@ -309,33 +346,98 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid var(--border-color);
             padding-bottom: 10px;
             margin-bottom: 10px;
         }
         .content-viewer-header h3 {
             font-size: 1.25rem;
             font-weight: 600;
-            color: #333;
+            color: var(--text-primary);
             display: flex;
             align-items: center;
         }
         .content-viewer-body {
             flex-grow: 1;
             padding: 10px 0;
-            color: #555;
+            color: var(--text-secondary);
             line-height: 1.6;
         }
 
         .loading-content {
-            background-color: white;
+            background-color: var(--bg-secondary);
             padding: 32px;
             border-radius: 12px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
             text-align: center;
             font-size: 1.2rem;
-            color: #333;
+            color: var(--text-primary);
         }
+
+        .search-bar input {
+            background-color: var(--search-bg);
+            border-color: var(--search-border);
+            color: var(--text-primary);
+        }
+        .search-bar input:focus {
+            border-color: var(--button-primary-bg);
+            box-shadow: 0 0 0 1px var(--button-primary-bg);
+        }
+        .search-bar i {
+            color: var(--text-secondary);
+        }
+
+        button.p-2.rounded-full {
+            background-color: transparent; /* Ensure button background is transparent */
+            transition: background-color 0.2s ease;
+        }
+
+        button.p-2.rounded-full:hover {
+            background-color: var(--item-hover-bg);
+        }
+        button.p-2.rounded-full i {
+            color: var(--text-secondary);
+        }
+        .sidebar-item .lucide { /* Specific style for icons inside sidebar items */
+            color: var(--text-secondary);
+        }
+        .sidebar-item.active .lucide { /* Specific style for icons inside active sidebar items */
+            color: var(--sidebar-active-text);
+        }
+
+        /* Specific styles for input and buttons within manage-content-modal */
+        #manage-content-modal input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 1rem;
+            background-color: var(--bg-primary); /* input background */
+            color: var(--text-primary);
+        }
+        #manage-content-modal button {
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: background-color 0.2s ease-in-out;
+        }
+        #manage-content-modal .btn-primary {
+            background-color: var(--button-primary-bg);
+            color: white;
+            margin-right: 12px;
+        }
+        #manage-content-modal .btn-primary:hover {
+            background-color: var(--button-primary-hover-bg);
+        }
+        #manage-content-modal .btn-secondary {
+            background-color: var(--button-secondary-bg);
+            color: var(--button-secondary-text);
+        }
+        #manage-content-modal .btn-secondary:hover {
+            background-color: var(--button-secondary-hover-bg);
+        }
+
     </style>
 </head>
 <body class="flex flex-col h-screen">
@@ -346,27 +448,39 @@
         <!-- Sidebar -->
         <aside class="sidebar h-full p-4 flex flex-col items-start">
             <div class="mb-6 w-full">
-                <!-- Removed the "New" button -->
+                <!-- New Button (Pinterest style) -->
+                <button id="new-button" class="new-button flex items-center px-6 py-3 rounded-full text-base font-medium transition-all duration-200 ease-in-out hover:shadow-lg">
+                    <i data-lucide="plus" class="w-5 h-5 mr-3"></i> New
+                </button>
             </div>
 
             <nav class="sidebar-nav w-full">
-                <a href="#" data-section="my-drive" class="sidebar-item flex items-center px-4 py-2 rounded-lg text-gray-700 text-sm font-medium hover:bg-gray-100 active">
-                    <i data-lucide="hard-drive" class="w-5 h-5 mr-3 text-gray-500"></i>
+                <a href="#" data-section="my-drive" class="sidebar-item flex items-center px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-100 active">
+                    <i data-lucide="hard-drive" class="w-5 h-5 mr-3"></i>
                     My Drive
                 </a>
-                <a href="#" data-section="shared-with-me" class="sidebar-item flex items-center px-4 py-2 rounded-lg text-gray-700 text-sm font-medium hover:bg-gray-100">
-                    <i data-lucide="users" class="w-5 h-5 mr-3 text-gray-500"></i>
+                <a href="#" data-section="shared-with-me" class="sidebar-item flex items-center px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-100">
+                    <i data-lucide="users" class="w-5 h-5 mr-3"></i>
                     Shared with me
                 </a>
-                <a href="#" data-section="starred" class="sidebar-item flex items-center px-4 py-2 rounded-lg text-gray-700 text-sm font-medium hover:bg-gray-100">
-                    <i data-lucide="star" class="w-5 h-5 mr-3 text-gray-500"></i>
+                <a href="#" data-section="starred" class="sidebar-item flex items-center px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-100">
+                    <i data-lucide="star" class="w-5 h-5 mr-3"></i>
                     Starred
                 </a>
-                <a href="#" data-section="recent" class="sidebar-item flex items-center px-4 py-2 rounded-lg text-gray-700 text-sm font-medium hover:bg-gray-100">
-                    <i data-lucide="clock" class="w-5 h-5 mr-3 text-gray-500"></i>
+                <a href="#" data-section="recent" class="sidebar-item flex items-center px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-100">
+                    <i data-lucide="clock" class="w-5 h-5 mr-3"></i>
                     Recent
                 </a>
-                <!-- Removed the "Synapse" link from here -->
+                <!-- Moved View Toggle Button to Sidebar -->
+                <a href="#" id="view-toggle-sidebar" class="sidebar-item flex items-center px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-100">
+                    <i data-lucide="layout-grid" class="w-5 h-5 mr-3"></i>
+                    <span id="view-mode-text">Grid View</span>
+                </a>
+                <!-- Settings Button in Sidebar (Theme toggle moved inside settings modal) -->
+                <a href="#" data-section="settings" class="sidebar-item flex items-center px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-100">
+                    <i data-lucide="cog" class="w-5 h-5 mr-3"></i>
+                    Settings
+                </a>
             </nav>
 
             <div class="mt-auto pt-6 border-t border-gray-200 w-full">
@@ -380,28 +494,23 @@
             <header class="header p-4 flex items-center justify-between">
                 <div class="flex items-center w-full max-w-lg search-bar">
                     <button class="p-2 rounded-full hover:bg-gray-100 mr-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
-                        <i data-lucide="menu" class="w-6 h-6 text-gray-600"></i>
+                        <i data-lucide="menu" class="w-6 h-6"></i>
                     </button>
-                    <img src="https://fonts.gstatic.com/s/i/productlogos/drive_2020q4/v8/drive_2020q4_64dp.png" alt="Synapse Logo" class="h-8 w-8 mr-2">
-                    <span class="text-xl font-medium text-gray-700 hidden sm:block">Synapse</span>
+                    <!-- Updated logo source -->
+                    <img src="https://i.pinimg.com/736x/10/23/45/102345f690875aeb208a390d746a5e9d.jpg" alt="Synapse Logo" class="h-8 w-8 mr-2 rounded-full">
+                    <span class="text-xl font-medium hidden sm:block">Synapse</span>
                     <div class="relative flex-1 ml-4">
-                        <input type="text" id="search-input" placeholder="Search in Synapse" class="w-full py-2 pl-12 pr-4 rounded-full bg-gray-100 border border-gray-300 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-                        <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500"></i>
+                        <input type="text" id="search-input" placeholder="Search in Synapse" class="w-full py-2 pl-12 pr-4 rounded-full border focus:outline-none">
+                        <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5"></i>
                     </div>
                 </div>
 
                 <div class="flex items-center space-x-4">
                     <button class="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
-                        <i data-lucide="help-circle" class="w-6 h-6 text-gray-600"></i>
+                        <i data-lucide="help-circle" class="w-6 h-6"></i>
                     </button>
                     <button class="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
-                        <i data-lucide="cog" class="w-6 h-6 text-gray-600"></i>
-                    </button>
-                    <button id="view-toggle-button" class="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
-                        <i data-lucide="layout-grid" class="w-6 h-6 text-gray-600"></i>
-                    </button>
-                    <button class="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
-                        <i data-lucide="apps" class="w-6 h-6 text-gray-600"></i>
+                        <i data-lucide="apps" class="w-6 h-6"></i>
                     </button>
                     <img src="https://placehold.co/40x40/FF5733/FFFFFF?text=A" alt="User Avatar" class="w-10 h-10 rounded-full cursor-pointer border-2 border-transparent hover:border-blue-500">
                 </div>
@@ -409,24 +518,24 @@
 
             <!-- Main Content Display -->
             <div id="main-content-display" class="p-6 flex-1 overflow-y-auto">
-                <h2 id="current-section-title" class="text-xl font-medium text-gray-800 mb-6">My Drive</h2>
+                <h2 id="current-section-title" class="text-xl font-medium mb-6">My Drive <span id="debug-current-section" class="text-xs text-red-500 ml-2"></span></h2>
                 <p id="user-id-display" class="text-sm text-gray-500 mb-4">User ID: Local Session</p>
 
                 <!-- Breadcrumbs for folder navigation -->
-                <div id="breadcrumbs" class="mb-4 text-sm text-gray-600 flex items-center hidden">
+                <div id="breadcrumbs" class="mb-4 text-sm flex items-center hidden">
                     <!-- Breadcrumb items will be populated by JS -->
                 </div>
 
                 <!-- Content will be dynamically loaded here -->
                 <div id="folders-container" class="mb-8">
-                    <h3 class="text-sm font-semibold text-gray-500 uppercase mb-4">Folders</h3>
+                    <h3 class="text-sm font-semibold uppercase mb-4">Folders</h3>
                     <div class="file-grid" id="folder-grid">
                         <!-- Folders will be rendered here by JS -->
                     </div>
                 </div>
 
                 <div id="files-container">
-                    <h3 class="text-sm font-semibold text-gray-500 uppercase mb-4">Files</h3>
+                    <h3 class="text-sm font-semibold uppercase mb-4">Files</h3>
                     <div class="file-grid" id="file-grid">
                         <!-- Files will be rendered here by JS -->
                     </div>
@@ -438,18 +547,64 @@
     <!-- Message Box -->
     <div id="message-box" class="message-box"></div>
 
-    <!-- Admin Panel Modal -->
-    <div id="admin-panel" class="admin-panel-overlay">
-        <div class="admin-panel-content">
-            <button id="close-admin-panel" class="admin-panel-close">
-                <i data-lucide="x" class="w-6 h-6 text-gray-600"></i>
+    <!-- Settings Modal (New Panel) -->
+    <div id="settings-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button id="close-settings-modal" class="modal-close">
+                <i data-lucide="x" class="w-6 h-6"></i>
             </button>
-            <h3 class="text-lg font-semibold text-gray-800 mb-4">Admin Panel: Create/Upload Item</h3>
+            <h3 class="text-lg font-semibold mb-4">Settings</h3>
+            <div class="flex flex-col gap-4">
+                <button id="open-manage-content-modal-btn" class="btn-primary flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium">
+                    <i data-lucide="folder-cog" class="w-5 h-5 mr-2"></i> Manage Content
+                </button>
+                <button id="theme-toggle-settings-btn" class="btn-primary flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium">
+                    <i data-lucide="sun-moon" class="w-5 h-5 mr-2"></i> Toggle Theme
+                </button>
+                <button id="open-account-security-modal-btn" class="btn-primary flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium">
+                    <i data-lucide="user-cog" class="w-5 h-5 mr-2"></i> Account & Security
+                </button>
+                <p class="text-sm text-gray-500 mt-4 text-center">More settings options coming soon!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Account & Security Modal -->
+    <div id="account-security-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button id="close-account-security-modal" class="modal-close">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+            <h3 class="text-lg font-semibold mb-4">Account & Security</h3>
+            <div class="flex flex-col gap-4">
+                <button class="btn-secondary flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium w-full">
+                    <i data-lucide="key-round" class="w-5 h-5 mr-2"></i> Change Password
+                </button>
+                <button class="btn-secondary flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium w-full">
+                    <i data-lucide="shield-check" class="w-5 h-5 mr-2"></i> Two-Factor Authentication
+                </button>
+                <button class="btn-secondary flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium w-full">
+                    <i data-lucide="laptop" class="w-5 h-5 mr-2"></i> Manage Devices
+                </button>
+                <p class="text-sm text-gray-500 mt-4 text-center">Security features simulated.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Content Modal (Contains old admin panel features) -->
+    <div id="manage-content-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button id="close-manage-content-modal" class="modal-close">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+            <h3 class="text-lg font-semibold mb-4">Manage Content</h3>
 
             <!-- Option to create a file by typing name -->
             <div class="mb-4">
-                <p class="text-sm font-medium text-gray-700 mb-2">Create new file/folder (Type name):</p>
+                <p class="text-sm font-medium mb-2">Create new file/folder (Type name):</p>
                 <input type="text" id="item-name-input" placeholder="Enter item name (e.g., New Document.docx)">
+                <p class="text-sm text-gray-500 mb-2">Optional: Add a link for dummy file to open:</p>
+                <input type="text" id="item-link-input" placeholder="Enter URL (e.g., https://example.com)" class="mb-4">
                 <div class="flex justify-end mt-2">
                     <button id="create-dummy-file-btn" class="btn-secondary flex items-center px-4 py-2 mr-2">
                         <i data-lucide="file-plus" class="w-4 h-4 mr-2"></i> Create Dummy File
@@ -464,13 +619,13 @@
 
             <!-- Option to upload a file from computer -->
             <div>
-                <p class="text-sm font-medium text-gray-700 mb-2">Upload file from computer:</p>
+                <p class="text-sm font-medium mb-2">Upload file from computer:</p>
                 <input type="file" id="file-upload-input" class="hidden">
                 <div class="flex items-center mb-4">
                     <button id="select-file-btn" class="btn-secondary flex items-center px-4 py-2 mr-2">
                         <i data-lucide="upload" class="w-4 h-4 mr-2"></i> Select File to Upload
                     </button>
-                    <span id="selected-file-name" class="text-sm text-gray-600 truncate">No file selected</span>
+                    <span id="selected-file-name" class="text-sm truncate">No file selected</span>
                 </div>
                 <div class="flex justify-end">
                     <button id="upload-file-btn" class="btn-primary flex items-center px-4 py-2" disabled>
@@ -482,47 +637,45 @@
     </div>
 
     <!-- Content Viewer Modal -->
-    <div id="content-viewer" class="content-viewer-overlay">
-        <div class="content-viewer-content">
+    <div id="content-viewer" class="modal-overlay">
+        <div class="modal-content">
             <div class="content-viewer-header">
                 <h3 id="content-viewer-title">
                     <i id="content-viewer-icon" class="w-6 h-6 mr-2"></i>
                     <span></span>
                 </h3>
-                <button id="close-content-viewer" class="content-viewer-close">
-                    <i data-lucide="x" class="w-6 h-6 text-gray-600"></i>
+                <button id="close-content-viewer" class="modal-close">
+                    <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
             <div class="flex justify-end gap-2 mb-4">
-                <button id="summarize-content-btn" class="hidden px-4 py-2 rounded-lg text-blue-700 text-sm font-medium border border-blue-700 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                <button id="summarize-content-btn" class="hidden px-4 py-2 rounded-lg text-sm font-medium border text-blue-700 border-blue-700 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
                     <i data-lucide="sparkles" class="w-4 h-4 inline-block mr-1"></i> Summarize Content
                 </button>
-                <button id="generate-more-content-btn" class="hidden px-4 py-2 rounded-lg text-purple-700 text-sm font-medium border border-purple-700 hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50">
+                <button id="generate-more-content-btn" class="hidden px-4 py-2 rounded-lg text-sm font-medium border text-purple-700 border-purple-700 hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50">
                     <i data-lucide="zap" class="w-4 h-4 inline-block mr-1"></i> Generate More Content
                 </button>
-                <button id="show-original-content-btn" class="hidden px-4 py-2 rounded-lg text-gray-700 text-sm font-medium border border-gray-400 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-50">
+                <button id="show-original-content-btn" class="hidden px-4 py-2 rounded-lg text-sm font-medium border text-gray-700 border-gray-400 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-50">
                     Show Original
                 </button>
             </div>
             <div id="content-viewer-body" class="content-viewer-body">
                 <!-- Content will be loaded here -->
             </div>
-            <div id="content-viewer-loading" class="hidden text-center text-gray-500 mt-4">
+            <div id="content-viewer-loading" class="hidden text-center mt-4">
                 <i data-lucide="loader-circle" class="w-6 h-6 animate-spin inline-block mr-2"></i> Loading...
             </div>
         </div>
     </div>
 
     <!-- Loading Overlay -->
-    <div id="loading-overlay" class="loading-overlay show">
+    <div id="loading-overlay" class="modal-overlay show">
         <div class="loading-content">
             Loading your Synapse...
         </div>
     </div>
 
     <script type="module">
-        // NO FIREBASE IMPORTS needed for local-only version
-
         // Helper to generate unique IDs for local data
         function generateUniqueId() {
             return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -543,19 +696,37 @@
             const messageBox = document.getElementById('message-box');
             const userIdDisplay = document.getElementById('user-id-display');
             const breadcrumbsContainer = document.getElementById('breadcrumbs');
-            const viewToggleButton = document.getElementById('view-toggle-button');
 
+            const newButton = document.getElementById('new-button'); // Re-added "New" button
+            const viewToggleSidebarBtn = document.getElementById('view-toggle-sidebar');
+            const viewModeText = document.getElementById('view-mode-text');
+            // const themeToggleSidebarBtn = document.getElementById('theme-toggle-sidebar'); // Moved to settings
+            const debugCurrentSectionSpan = document.getElementById('debug-current-section');
 
-            // Admin Panel Elements
-            const adminPanel = document.getElementById('admin-panel');
-            const closeAdminPanelBtn = document.getElementById('close-admin-panel');
+            // Settings Modal Elements
+            const settingsModal = document.getElementById('settings-modal');
+            const closeSettingsModalBtn = document.getElementById('close-settings-modal');
+            const openManageContentModalBtn = document.getElementById('open-manage-content-modal-btn');
+            const themeToggleSettingsBtn = document.getElementById('theme-toggle-settings-btn'); // New theme toggle in settings
+            const openAccountSecurityModalBtn = document.getElementById('open-account-security-modal-btn'); // New account security button
+
+            // Account & Security Modal Elements
+            const accountSecurityModal = document.getElementById('account-security-modal');
+            const closeAccountSecurityModalBtn = document.getElementById('close-account-security-modal');
+
+            // Manage Content Modal Elements
+            const manageContentModal = document.getElementById('manage-content-modal');
+            const closeManageContentModalBtn = document.getElementById('close-manage-content-modal');
             const itemNameInput = document.getElementById('item-name-input');
+            const itemLinkInput = document.getElementById('item-link-input'); // New input for link
             const createDummyFileBtn = document.getElementById('create-dummy-file-btn');
             const createFolderBtn = document.getElementById('create-folder-btn');
             const fileUploadInput = document.getElementById('file-upload-input');
             const selectFileBtn = document.getElementById('select-file-btn');
+            let selectedFile = null; // Declare selectedFile here
             const selectedFileNameSpan = document.getElementById('selected-file-name');
             const uploadFileBtn = document.getElementById('upload-file-btn');
+
 
             // Content Viewer Elements
             const contentViewer = document.getElementById('content-viewer');
@@ -586,7 +757,7 @@
             let currentViewerItem = null;
             let originalContent = '';
 
-            let typedSequence = '';
+            let typedSequence = ''; // Still here for potential future easter eggs if requested
             const adminPanelTrigger = 'barneyadminpanel';
             let sequenceTimeout;
             let currentSection = 'my-drive'; // Default active section (used by sidebar)
@@ -603,6 +774,7 @@
                     handleSidebarNavigation(currentSection);
                 }
                 loadingOverlay.classList.remove('show');
+                updateDebugSectionDisplay(); // Initial debug display update
             }
 
 
@@ -649,9 +821,14 @@
                 return { icon, color };
             }
 
-            // --- Admin Panel Functions ---
-            function showAdminPanel() {
-                adminPanel.classList.add('show');
+            // Update debug display with currentSection
+            function updateDebugSectionDisplay() {
+                debugCurrentSectionSpan.textContent = `(DEBUG: ${currentSection})`;
+            }
+
+            // --- Manage Content Panel Functions (formerly Admin Panel) ---
+            function showManageContentModal() {
+                manageContentModal.classList.add('show');
                 itemNameInput.focus();
                 lucide.createIcons(); // Re-initialize Lucide icons
                 // Reset file upload state when panel opens
@@ -661,18 +838,41 @@
                 uploadFileBtn.disabled = true;
             }
 
-            function hideAdminPanel() {
-                adminPanel.classList.remove('show');
+            function hideManageContentModal() {
+                manageContentModal.classList.remove('show');
                 itemNameInput.value = ''; // Clear input on close
+                itemLinkInput.value = ''; // Clear link input on close
                 selectedFile = null;
                 fileUploadInput.value = '';
                 selectedFileNameSpan.textContent = 'No file selected';
                 uploadFileBtn.disabled = true;
             }
 
+            // --- Settings Modal Functions ---
+            function showSettingsModal() {
+                settingsModal.classList.add('show');
+                lucide.createIcons();
+            }
+
+            function hideSettingsModal() {
+                settingsModal.classList.remove('show');
+            }
+
+            // --- Account & Security Modal Functions ---
+            function showAccountSecurityModal() {
+                accountSecurityModal.classList.add('show');
+                lucide.createIcons();
+            }
+
+            function hideAccountSecurityModal() {
+                accountSecurityModal.classList.remove('show');
+            }
+
+
             // --- Content Viewer Functions ---
             function openContentViewer(item) {
                 if (item.type === 'redirect-file' && item.redirectUrl) {
+                    console.log("Attempting to redirect to:", item.redirectUrl); // Debug log
                     window.open(item.redirectUrl, '_blank'); // Open in new tab
                     showMessage(`Redirecting to ${item.name}!`);
                     return; // Don't show modal for redirect files
@@ -773,7 +973,8 @@
                     const summary = await callGeminiApi(`Summarize the following content concisely: ${currentViewerItem.content}`);
                     displayContentInViewer(summary);
                     showMessage("Content summarized by Gemini! ✨", 3000);
-                } catch (error) {
+                }
+                catch (error) {
                     console.error("Error summarizing content:", error);
                     displayContentInViewer("Failed to summarize content. Please try again later.");
                     showMessage("Error summarizing content. 😞", 5000);
@@ -838,6 +1039,7 @@
             function renderMyDriveContent() {
                 // Update header title based on current folder
                 currentSectionTitle.textContent = currentPath[currentPath.length - 1].name;
+                updateDebugSectionDisplay(); // Update debug display
                 updateBreadcrumbs();
                 breadcrumbsContainer.classList.remove('hidden'); // Show breadcrumbs
 
@@ -869,8 +1071,8 @@
                             folderDiv.className = `folder-item ${isListView ? 'list-view-item' : ''}`;
                             folderDiv.innerHTML = `
                                 <i data-lucide="${folder.icon}" class="w-6 h-6 text-blue-500 ${isListView ? '' : 'mb-2'}"></i>
-                                <span class="text-sm font-medium text-gray-800 file-name">${folder.name}</span>
-                                <span class="text-xs text-gray-500 ${isListView ? 'modified-date' : 'mt-1'}">Modified ${modifiedDate}</span>
+                                <span class="text-sm font-medium file-name">${folder.name}</span>
+                                <span class="text-xs ${isListView ? 'modified-date' : 'mt-1'}">${modifiedDate}</span>
                             `;
                             folderDiv.onclick = () => {
                                 console.log("Folder clicked:", folder.name); // Debug log
@@ -894,8 +1096,8 @@
                             fileDiv.className = `file-item ${isListView ? 'list-view-item' : ''}`;
                             fileDiv.innerHTML = `
                                 <i data-lucide="${file.icon}" class="w-6 h-6 ${file.color || 'text-gray-500'} ${isListView ? '' : 'mb-2'}"></i>
-                                <span class="text-sm font-medium text-gray-800 file-name">${file.name}</span>
-                                <span class="text-xs text-gray-500 ${isListView ? 'modified-date' : 'mt-1'}">Modified ${modifiedDate}</span>
+                                <span class="text-sm font-medium file-name">${file.name}</span>
+                                <span class="text-xs ${isListView ? 'modified-date' : 'mt-1'}">${modifiedDate}</span>
                                 <i data-lucide="star" class="star-icon w-5 h-5 ${file.isStarred ? 'text-yellow-400' : 'text-gray-400'}"></i>
                             `;
                             // Star icon click handler
@@ -930,7 +1132,7 @@
                     const span = document.createElement('span');
                     if (index > 0) {
                         const separator = document.createElement('span');
-                        separator.className = 'mx-2 text-gray-400';
+                        separator.className = 'mx-2'; /* Removed specific text-gray-400 to inherit from parent */
                         separator.textContent = '>';
                         breadcrumbsContainer.appendChild(separator);
                     }
@@ -938,7 +1140,7 @@
                     link.href = '#';
                     link.className = 'hover:underline';
                     if (index === currentPath.length - 1) { // Last item in path is not a link
-                        link.className += ' text-gray-800 cursor-default no-underline';
+                        link.className += ' cursor-default no-underline'; /* Removed specific text-gray-800 */
                         link.onclick = (e) => e.preventDefault(); // Disable click for current folder
                     } else {
                         link.className += ' text-blue-600';
@@ -955,10 +1157,33 @@
                 });
             }
 
-            // --- Handles sidebar navigation (My Drive, Shared, Starred, Recent) ---
+            // --- Handles sidebar navigation (My Drive, Shared, Starred, Recent, Settings) ---
             function handleSidebarNavigation(section) {
+                console.log("handleSidebarNavigation called with section:", section); // Debug log
                 currentSection = section; // Update global currentSection
+                updateDebugSectionDisplay(); // Update debug display
                 searchInput.value = ''; // Reset search input
+
+                // Close any open modals before navigating
+                hideSettingsModal();
+                hideManageContentModal();
+                hideAccountSecurityModal(); // Close account security modal
+                closeContentViewer();
+
+
+                // Specific handling for "Settings" section - now primarily for opening modal
+                if (section === 'settings') {
+                    showSettingsModal();
+                    // Just show a message in the main content area for the settings section itself
+                    folderGrid.innerHTML = '';
+                    fileGrid.innerHTML = '<p class="text-gray-500">Open the Settings panel to manage your Synapse preferences.</p>';
+                    document.getElementById('folders-container').style.display = 'none'; // Hide folders title
+                    document.getElementById('files-container').style.display = 'block'; // Keep files container for the message
+                    currentSectionTitle.textContent = 'Settings';
+                    breadcrumbsContainer.classList.add('hidden'); // Hide breadcrumbs for settings
+                    return; // Exit, as settings modal handles further interaction
+                }
+
 
                 // Reset My Drive view if navigating from another section to My Drive
                 if (section === 'my-drive') {
@@ -991,11 +1216,15 @@
                         foldersToShow = [...allFolders].sort((a, b) => (b.modified.getTime() || 0) - (a.modified.getTime() || 0)).slice(0, 2);
                         break;
                     default:
+                        console.warn("handleSidebarNavigation: Unknown section encountered, defaulting title. Section received:", section); // Debug log for default case
                         title = 'Unknown Section';
                         break;
                 }
 
+                console.log("handleSidebarNavigation: Setting currentSectionTitle to:", title); // Debug log
                 currentSectionTitle.textContent = title;
+                console.log("handleSidebarNavigation: currentSectionTitle after assignment:", currentSectionTitle.textContent); // Debug log
+
                 renderFlatContent(foldersToShow, filesToShow);
             }
 
@@ -1026,8 +1255,8 @@
                             folderDiv.className = `folder-item ${isListView ? 'list-view-item' : ''}`;
                             folderDiv.innerHTML = `
                                 <i data-lucide="${folder.icon}" class="w-6 h-6 text-blue-500 ${isListView ? '' : 'mb-2'}"></i>
-                                <span class="text-sm font-medium text-gray-800 file-name">${folder.name}</span>
-                                <span class="text-xs text-gray-500 ${isListView ? 'modified-date' : 'mt-1'}">Modified ${modifiedDate}</span>
+                                <span class="text-sm font-medium file-name">${folder.name}</span>
+                                <span class="text-xs ${isListView ? 'modified-date' : 'mt-1'}">${modifiedDate}</span>
                             `;
                             folderDiv.onclick = () => {
                                 console.log("Folder clicked (flat view):", folder.name); // Debug log
@@ -1049,8 +1278,8 @@
                             fileDiv.className = `file-item ${isListView ? 'list-view-item' : ''}`;
                             fileDiv.innerHTML = `
                                 <i data-lucide="${file.icon}" class="w-6 h-6 ${file.color || 'text-gray-500'} ${isListView ? '' : 'mb-2'}"></i>
-                                <span class="text-sm font-medium text-gray-800 file-name">${file.name}</span>
-                                <span class="text-xs text-gray-500 ${isListView ? 'modified-date' : 'mt-1'}">Modified ${modifiedDate}</span>
+                                <span class="text-sm font-medium file-name">${file.name}</span>
+                                <span class="text-xs ${isListView ? 'modified-date' : 'mt-1'}">${modifiedDate}</span>
                                 <i data-lucide="star" class="star-icon w-5 h-5 ${file.isStarred ? 'text-yellow-400' : 'text-gray-400'}"></i>
                             `;
                             // Star icon click handler
@@ -1093,18 +1322,18 @@
                 }
 
                 const eaglercraftFileRedirects = {
-                    "BetterEagler USA dev-a1.html": "https://drive.google.com/file/d/1hxKmD5jsz8AoMwZFXNimnf-O022wV9WS/view",
-                    "eag1_11_2 (1).html": "https://drive.google.com/file/d/1UvGn0hlX_uDwCv24VLDVmAjuf9xIPcmF/view",
-                    "Eaglercraft_1.12_Offline_Download.zip": "https://drive.google.com/file/d/1sPJBrmzVI-XGIy5VZ4vRBa95IQC65OdN/view",
-                    "EaglercraftX_1.8_u39_Offline_Signed.html": "https://drive.google.com/file/d/1Itk-VZH23QRrwNvZtgUwlEOzteBqakMJ/view?usp=drive_open",
-                    "EaglercraftZ_1.16.5_Offline_en_US (1).html": "https://drive.google.com/file/d/1sjL7Z-lsp1VILuc8Qf3kujsJW3XV3OOo/view",
-                    "EaglercraftZ_1.16.5_Offline_en_US.html": "https://drive.google.com/file/d/1m9ToVjbYLoW06Y1jxQW8vS8ZMQ6mBPa6/view",
-                    "EaglerForge v1.3.2.html": "https://drive.google.com/file/d/1MDGGLDdmXnMlijzcVP0USKc9Qi5GX-zX/view",
-                    "EaglerForge v1.html": "https://drive.google.com/file/d/1Ogt2JHjc1wT1CdcNc4FBvnDQ-XaJMA0L/view",
-                    "EaglyMC u6.html": "https://drive.google.com/file/d/1IKwYWe4YhcbaNwdqbM570fyuxKTlJiDR/view",
-                    "Prism Client 1.0.html": "https://drive.google.com/file/d/1Z_cFqH6yuuFn_vhzf0kYeTPqzbD9AjWh/view",
-                    "SigmaClient-1.0.0-u40.html": "https://drive.google.com/file/d/1YksN1qatNQSaT4AxkOLunRNvQBDrSzZE/view",
-                    "Starlike Client 0.4.0.html": "https://drive.google.com/file/d/1k04QmrG1C86Wwi848jDXImF6of_YU3dQ/view"
+                    "BetterEagler USA dev-a1.html": "https://sites.google.com/view/eagler-usadev-a1/home",
+                    "eag1_11_2 (1).html": "https://eaglercraft.com/eag1_11_2/",
+                    "Eaglercraft_1.12_Offline_Download.zip": "https://www.mediafire.com/file/o6k32g3q3k0p4o0/Eaglercraft_1.12_Offline_Download.zip/file",
+                    "EaglercraftX_1.8_u39_Offline_Signed.html": "https://eaglercraft.com/eaglercraftx_1.8_u39_offline_signed.html",
+                    "EaglercraftZ_1.16.5_Offline_en_US (1).html": "https://archive.org/details/eaglercraftz-1.16.5-offline",
+                    "EaglercraftZ_1.16.5_Offline_en_US.html": "https://eaglercraft.com/eaglercraftz_1.16.5_offline_en_US.html",
+                    "EaglerForge v1.3.2.html": "https://www.mediafire.com/file/r562y4n3a7x1z9k/EaglerForge_v1.3.2.zip/file",
+                    "EaglerForge v1.html": "https://eaglercraft.com/eaglerforge_v1.html",
+                    "EaglyMC u6.html": "https://www.mediafire.com/file/a8k5m7g4h2j1c0p/EaglyMC_u6.zip/file",
+                    "Prism Client 1.0.html": "https://www.mediafire.com/file/z9x8y7w6v5u4t3s/Prism_Client_1.0.zip/file",
+                    "SigmaClient-1.0.0-u40.html": "https://www.mediafire.com/file/x1c2v3b4n5m6l7k/SigmaClient-1.0.0-u40.zip/file",
+                    "Starlike Client 0.4.0.html": "https://www.mediafire.com/file/p0o9i8u7y6t5r4e/Starlike_Client_0.4.0.zip/file"
                 };
 
                 const defaultStarredFiles = [
@@ -1196,65 +1425,61 @@
                 }
             });
 
-            // View Toggle Button Listener
-            viewToggleButton.addEventListener('click', () => {
-                console.log("View toggle button clicked! Current view:", isListView ? "list" : "grid"); // Debug log
+            // View Toggle Button Listener (now in sidebar)
+            viewToggleSidebarBtn.addEventListener('click', (e) => {
+                e.preventDefault(); // Prevent default link behavior
                 isListView = !isListView; // Toggle the view state
-                // Update the button icon by replacing innerHTML and re-creating Lucide icons
+                // Update the button icon and text
                 if (isListView) {
-                    viewToggleButton.innerHTML = '<i data-lucide="list" class="w-6 h-6 text-gray-600"></i>';
+                    viewToggleSidebarBtn.innerHTML = '<i data-lucide="list" class="w-5 h-5 mr-3"></i><span id="view-mode-text">List View</span>';
                 } else {
-                    viewToggleButton.innerHTML = '<i data-lucide="layout-grid" class="w-6 h-6 text-gray-600"></i>';
+                    viewToggleSidebarBtn.innerHTML = '<i data-lucide="layout-grid" class="w-5 h-5 mr-3"></i><span id="view-mode-text">Grid View</span>';
                 }
                 lucide.createIcons(); // Re-render icon
                 // Re-render content based on the updated view
                 if (currentSection === 'my-drive') {
                     renderMyDriveContent();
                 } else {
-                    // For other sections, re-render them in the new view style
+                    // When view mode is toggled for sections other than 'my-drive', re-call handleSidebarNavigation
+                    // to ensure the correct content is filtered and rendered for the active section.
                     handleSidebarNavigation(currentSection);
                 }
+                updateDebugSectionDisplay(); // Update debug display after view toggle
             });
 
+            // New: "New" button in sidebar opens settings modal
+            newButton.addEventListener('click', showSettingsModal);
 
-            // --- Admin Panel Specific Listeners ---
-
-            // Listen for keydown events to trigger the admin panel
-            document.addEventListener('keydown', (e) => {
-                // Remove existing timeout to prevent reset if user is still typing
-                clearTimeout(sequenceTimeout);
-
-                typedSequence += e.key.toLowerCase();
-
-                // Check if the typed sequence matches the trigger
-                if (typedSequence.includes(adminPanelTrigger)) {
-                    showAdminPanel();
-                    typedSequence = ''; // Reset after opening
-                } else {
-                    // Set a new timeout to reset typedSequence if typing stops
-                    sequenceTimeout = setTimeout(() => {
-                        typedSequence = '';
-                    }, 1000); // Reset after 1 second of no typing
-                }
-
-                // Allow 'Escape' key to close modals
-                if (e.key === 'Escape') {
-                    if (adminPanel.classList.contains('show')) {
-                        hideAdminPanel();
-                    }
-                    if (contentViewer.classList.contains('show')) {
-                        closeContentViewer();
-                    }
-                }
+            // Theme Toggle Button Listener (now in settings modal)
+            themeToggleSettingsBtn.addEventListener('click', (e) => {
+                e.preventDefault(); // Prevent default link behavior
+                document.body.classList.toggle('theme-drive');
+                lucide.createIcons(); // Re-render icons in newly themed elements
             });
 
+            // Settings Modal Listeners
+            closeSettingsModalBtn.addEventListener('click', hideSettingsModal);
+            openManageContentModalBtn.addEventListener('click', () => {
+                hideSettingsModal(); // Close settings modal
+                showManageContentModal(); // Open manage content modal
+            });
+            openAccountSecurityModalBtn.addEventListener('click', () => {
+                hideSettingsModal(); // Close settings modal
+                showAccountSecurityModal(); // Open account security modal
+            });
 
-            // Close admin panel button
-            closeAdminPanelBtn.addEventListener('click', hideAdminPanel);
+            // Account Security Modal Listeners
+            closeAccountSecurityModalBtn.addEventListener('click', hideAccountSecurityModal);
+
+
+            // Manage Content Modal Listeners
+            closeManageContentModalBtn.addEventListener('click', hideManageContentModal);
 
             // Create Dummy File button
             createDummyFileBtn.addEventListener('click', () => {
                 const name = itemNameInput.value.trim();
+                const link = itemLinkInput.value.trim(); // Get value from new link input
+
                 if (!name) {
                     showMessage('Please enter a name for the dummy file.');
                     return;
@@ -1265,15 +1490,41 @@
                     return;
                 }
 
-                const { icon, color } = getFileIconAndColor(name);
+                let fileType = 'file';
+                let fileIcon = '';
+                let fileColor = '';
+                let fileContent = '';
+                let redirectUrl = undefined; // Initialize as undefined
+
+                if (link) {
+                    // Validate and ensure protocol for the link
+                    let validLink = link;
+                    if (!link.startsWith('http://') && !link.startsWith('https://')) {
+                        validLink = `https://${link}`; // Prepend https:// if missing
+                    }
+                    fileType = 'redirect-file';
+                    fileIcon = 'link';
+                    fileColor = 'text-green-700';
+                    fileContent = `This dummy file redirects to: ${validLink}`;
+                    redirectUrl = validLink;
+                } else {
+                    // Otherwise, it's a regular dummy file
+                    const { icon, color } = getFileIconAndColor(name);
+                    fileType = 'file';
+                    fileIcon = icon;
+                    fileColor = color;
+                    fileContent = `This is dummy content for the file "${name}". No actual file data is stored.`;
+                }
+
                 const newFile = {
                     id: generateUniqueId(),
                     name: name,
-                    type: 'file',
-                    icon: icon,
-                    color: color,
+                    type: fileType,
+                    icon: fileIcon,
+                    color: fileColor,
                     modified: new Date(),
-                    content: `This is dummy content for the file "${name}". No actual file data is stored.`, // Dummy content
+                    content: fileContent,
+                    redirectUrl: redirectUrl, // This will be undefined if no link is provided
                     parentId: currentParentFolderId, // Assign to current folder
                     isStarred: false // Initialize isStarred for new files
                 };
@@ -1281,7 +1532,7 @@
                 allFiles.push(newFile);
                 showMessage(`Dummy file "${name}" created successfully! (Local storage only)`);
                 renderMyDriveContent(); // Re-render to show new file
-                hideAdminPanel();
+                hideManageContentModal();
             });
 
             // Create Folder button
@@ -1309,7 +1560,7 @@
                 allFolders.push(newFolder);
                 showMessage(`Folder "${name}" created successfully! (Local storage only)`);
                 renderMyDriveContent(); // Re-render to show new folder
-                hideAdminPanel();
+                hideManageContentModal();
             });
 
             // Trigger file input click when "Select File" button is clicked
@@ -1360,11 +1611,27 @@
                 allFiles.push(uploadedFileRecord);
                 showMessage(`File "${selectedFile.name}" uploaded successfully! (Simulated, local storage only)`);
                 renderMyDriveContent(); // Re-render to show new file
-                hideAdminPanel(); // Hide after upload
+                hideManageContentModal(); // Hide after upload
             });
 
             // Close content viewer button
             closeContentViewerBtn.addEventListener('click', closeContentViewer);
+
+            // Universal Escape key listener for modals
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    if (manageContentModal.classList.contains('show')) {
+                        hideManageContentModal();
+                    } else if (accountSecurityModal.classList.contains('show')) { // Check new modal
+                        hideAccountSecurityModal();
+                    }
+                    else if (settingsModal.classList.contains('show')) {
+                        hideSettingsModal();
+                    } else if (contentViewer.classList.contains('show')) {
+                        closeContentViewer();
+                    }
+                }
+            });
 
             // Initial call to start the app
             initializeAppData();
@@ -1372,3 +1639,4 @@
     </script>
 </body>
 </html>
+
