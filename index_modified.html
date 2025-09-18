@@ -1,0 +1,1841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SYNAPTIC V4</title>
+    <!-- Use the new Sansation font for a modern and clean aesthetic -->
+    <link href="https://fonts.googleapis.com/css2?family=Sansation:wght@400;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS for a modern and responsive design -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome CSS for lightning bolt icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        /* General styling for dark theme (default) - NOW MOLTEN THEME */
+        :root {
+            /* Molten Theme variables: inspired by fire and lava */
+            --bg-color: #1c0d0d; /* Very dark reddish-brown for a deep, smoky background */
+            --sidebar-bg-color: rgba(28, 13, 13, 0.2); /* Transparent version of background */
+            --text-color: #fff0e0; /* Soft off-white/cream for readability */
+            --header-color: #ff4500; /* OrangeRed - vibrant and fiery */
+            --btn-bg-primary: #e65100; /* Deep Orange for primary buttons */
+            --btn-hover-primary: #bf360c; /* Even deeper orange/red for hover */
+            --btn-bg-secondary: #ffa000; /* Amber for secondary buttons */
+            --btn-hover-secondary: #cc8000; /* Darker amber */
+            --file-item-bg: rgba(255, 69, 0, 0.08); /* Transparent OrangeRed for file items */
+            --message-bg-success: #ffa000; /* Amber for success messages */
+            --message-bg-error: #dc2626; /* Strong red for error messages */
+            --message-bg-info: #ffea00; /* Bright yellow for info messages */
+            --link-btn-bg: rgba(255, 69, 0, 0.1); /* Transparent OrangeRed for link buttons */
+            --link-btn-hover-bg: rgba(255, 69, 0, 0.2); /* Slightly more opaque OrangeRed on hover */
+            --link-btn-text: #fff0e0; /* Soft off-white/cream for link text */
+            --sys-info-bg: rgba(28, 13, 13, 0.5); /* Transparent dark reddish-brown for system info */
+            --sys-info-text: #fff0e0; /* Soft off-white/cream for system info text */
+        }
+
+        /* Light theme overrides */
+        body.light-theme {
+            --bg-color: #f3f4f6;
+            --sidebar-bg-color: rgba(255, 255, 255, 0.3); /* Significantly more transparent */
+            --text-color: #1f2937;
+            --header-color: #10b981;
+            --btn-bg-primary: #3b82f6;
+            --btn-hover-primary: #2563eb;
+            --btn-bg-secondary: #0ea5e9;
+            --btn-hover-secondary: #0284c7;
+            --file-item-bg: rgba(0, 0, 0, 0.05);
+            --message-bg-success: #22c55e;
+            --message-bg-error: #dc2626;
+            --message-bg-info: #f97316;
+            --link-btn-bg: rgba(0, 0, 0, 0.1);
+            --link-btn-hover-bg: rgba(0, 0, 0, 0.2);
+            --link-btn-text: #1f2937;
+            --sys-info-bg: rgba(255, 255, 255, 0.85);
+            --sys-info-text: #1f2937;
+        }
+
+        /* Minecraft theme overrides */
+        body.minecraft-theme {
+            --bg-color: #38a169; /* Green fallback */
+            --sidebar-bg-color: rgba(107, 70, 48, 0.3); /* Brown with lower opacity for consistency */
+            --text-color: #e5e7eb;
+            --header-color: #a0aec0; /* Gray */
+            --btn-bg-primary: #4a5568; /* Dark gray */
+            --btn-hover-primary: #2d3748; /* Darker gray */
+            --btn-bg-secondary: #c05621; /* Orange */
+            --btn-hover-secondary: #9b481c; /* Darker orange */
+            --file-item-bg: rgba(255, 255, 255, 0.1);
+            --message-bg-success: #38a169;
+            --message-bg-error: #e53e3e;
+            --message-bg-info: #dd6b20;
+            --link-btn-bg: rgba(255, 255, 255, 0.2);
+            --link-btn-hover-bg: rgba(255, 255, 255, 0.3);
+            --link-btn-text: #e5e7eb;
+            --sys-info-bg: rgba(107, 70, 48, 0.6);
+            --sys-info-text: #e5e7eb;
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        /* Class for persistent background image */
+        body.bg-minecraft-gif {
+            background-image: url('https://i.redd.it/4ec77oea73c41.gif');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        /* Custom theme class - applies user-selected colors */
+        body.custom-theme {
+            background-color: var(--custom-bg-color);
+            --text-color: var(--custom-text-color);
+            --header-color: var(--custom-header-color);
+            --btn-bg-primary: var(--custom-btn-color);
+            --sys-info-bg: var(--custom-bg-color);
+            --sys-info-text: var(--custom-text-color);
+        }
+
+        body {
+            /* Updated font to Sansation */
+            font-family: 'Sansation', sans-serif;
+            background-color: var(--bg-color);
+            position: relative;
+            overflow: hidden;
+            transition: background-color 0.5s ease, font-family 0.5s ease;
+            height: 100vh;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Sidebar and toggle button styles */
+        #sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 300px;
+            max-width: 80%; /* For mobile view */
+            background-color: var(--sidebar-bg-color);
+            backdrop-filter: blur(8px); /* Slightly less blur for a cleaner look */
+            transform: translateX(0);
+            transition: transform 0.3s ease-in-out;
+            z-index: 50;
+            overflow-y: auto;
+            padding: 1.5rem;
+            /* New shadow for a more "floating" effect */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #sidebar.closed {
+            transform: translateX(-100%);
+        }
+
+        /* Sidebar toggle button is now fixed to the viewport */
+        #sidebar-toggle-btn {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 60;
+            transition: all 0.3s ease-in-out;
+        }
+
+        /* The button moves with the sidebar when it's open */
+        #sidebar.open ~ #sidebar-toggle-btn {
+            left: calc(300px - 0.5rem); /* Adjust based on sidebar width */
+            transform: translateX(-100%);
+        }
+
+        .toggle-icon {
+            transform: rotate(0deg);
+            transition: transform 0.3s ease-in-out;
+        }
+
+        #sidebar.closed ~ #sidebar-toggle-btn .toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        /* Message box styling */
+        #message-box {
+            position: fixed;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 70;
+            width: 90%;
+            max-width: 500px;
+            transition: opacity 0.5s ease-out; /* Add a transition for the fade effect */
+        }
+
+        /* New class for the fade-out effect */
+        .fade-out {
+            opacity: 0;
+        }
+
+        /* General UI components from previous version, adapted for sidebar */
+        h1 {
+            color: var(--header-color);
+            transition: color 0.5s ease;
+        }
+
+        .text-gray-300, .text-gray-200 {
+            color: var(--text-color);
+            transition: color 0.5s ease;
+        }
+
+        .file-item {
+            display: flex;
+            flex-direction: column; /* Changed to column to stack text and buttons */
+            align-items: flex-start; /* Align text to the left */
+            padding: 1rem;
+            background-color: var(--file-item-bg);
+            border-radius: 0.75rem;
+            transition: background-color 0.5s ease;
+        }
+
+        .file-item span {
+            color: var(--text-color);
+        }
+
+        /* New class for the filename to allow wrapping */
+        .file-name-span {
+            word-wrap: break-word; /* Ensures long file names wrap correctly */
+            overflow-wrap: break-word;
+            white-space: normal; /* Override any nowrap behavior */
+        }
+
+        /* --- Overhauled Button Styles --- */
+        .launch-button, .upload-button, .theme-button, #sidebar-toggle-btn, #apply-custom-theme-btn, #settings-btn, .bg-option-btn, #dismiss-modal-btn, #go-to-loader-btn {
+            font-weight: bold;
+            padding: 0.8rem 1.6rem; /* Larger padding for a more substantial size */
+            border-radius: 0.75rem; /* Smoother rounded corners */
+            background-color: var(--btn-bg-primary);
+            color: var(--text-color);
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transform: translateY(0);
+        }
+
+        .launch-button:hover, .upload-button:hover, #sidebar-toggle-btn:hover, #apply-custom-theme-btn:hover, #settings-btn:hover, .bg-option-btn:hover, #dismiss-modal-btn:hover, #go-to-loader-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.2), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+
+        .upload-button {
+            background-image: linear-gradient(135deg, var(--btn-bg-primary), var(--btn-hover-primary)); /* Added a subtle gradient */
+            color: #fff;
+            font-size: 1.125rem; /* text-lg */
+        }
+
+        /* Special style for the audio player buttons */
+        .audio-player-button {
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+            border-radius: 50%; /* Make them perfectly circular */
+            background-color: rgba(255, 255, 255, 0.1); /* Subtle, transparent background */
+            color: var(--text-color);
+            padding: 1rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            transform: scale(1.0);
+        }
+
+        .audio-player-button:hover {
+            transform: scale(1.1);
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .theme-button, .bg-option-btn {
+            padding: 0.5rem 1rem;
+            box-shadow: none; /* No shadow on these buttons */
+            transform: none; /* No translateY animation */
+        }
+
+        .theme-button:hover, .bg-option-btn:hover {
+            transform: none; /* No translateY on hover */
+        }
+
+        .theme-button.active, .bg-option-btn.active {
+            box-shadow: 0 0 0 3px var(--header-color) inset; /* A cleaner border-like effect */
+            background-color: rgba(255, 255, 255, 0.1);
+            transform: scale(1.05);
+        }
+
+        /* Link button style has been updated */
+        .link-button, #go-to-home-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.6rem 1.2rem;
+            background-color: transparent; /* Transparent background */
+            color: var(--text-color);
+            border: 2px solid var(--header-color); /* Colorful, pronounced border */
+            border-radius: 9999px;
+            font-weight: 600;
+            transition: all 0.2s ease-in-out;
+            text-decoration: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transform: translateY(0);
+        }
+
+        .link-button:hover, #go-to-home-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .link-button svg { width: 1.25rem; height: 1.25rem; margin-right: 0.5rem; }
+        body.light-theme .link-button { border-color: var(--header-color); }
+
+        /* Full-screen containers for iframes */
+        .iframe-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none; /* Initially hidden */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--bg-color);
+            z-index: 20;
+        }
+
+        .iframe-container iframe {
+            width: 100%;
+            height: calc(100% - 60px); /* Leave space for the back button */
+            border: none;
+        }
+
+        .color-input-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            padding: 0.5rem;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 0.5rem;
+        }
+
+        .settings-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-in-out;
+        }
+
+        .settings-content.expanded {
+            max-height: 1000px; /* Increased value to fit new content */
+        }
+
+        /* New styling for the time and battery display */
+        .sys-info-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 60;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            border-radius: 9999px;
+            background-color: var(--sys-info-bg);
+            backdrop-filter: blur(10px);
+            color: var(--sys-info-text);
+            font-weight: 600;
+            font-size: 0.875rem; /* text-sm */
+            transition: all 0.5s ease;
+        }
+
+        .sys-info-container svg {
+            width: 1.25rem; /* 5 */
+            height: 1.25rem; /* 5 */
+        }
+
+        /* --- Updated Modal (Pop-up) Styles --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.75);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 1;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .modal-overlay.hidden {
+            display: none;
+            opacity: 0;
+        }
+
+        .modal-content {
+            position: relative;
+            background-color: var(--sidebar-bg-color);
+            color: var(--text-color);
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            text-align: center;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(15px);
+            animation: fadeIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+            transition: width 0.3s ease, height 0.3s ease, max-width 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* NEW: File item buttons container */
+        .file-item-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+            margin-top: 0.5rem;
+        }
+
+        /* NEW: Dismiss button for modals */
+        .dismiss-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--text-color);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            line-height: 1;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .dismiss-btn:hover {
+            color: var(--header-color);
+            transform: rotate(90deg);
+        }
+
+        /* NEW: Homepage specific styles */
+        #homepage-container {
+            display: none; /* Initially hidden, will be shown by JS */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            text-align: center;
+            padding: 2rem;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        #homepage-container.show {
+            display: flex;
+        }
+
+        #homepage-container h1 {
+            font-size: clamp(2rem, 5vw, 4rem); /* Responsive font size */
+        }
+
+        #homepage-container .ultimate-edition {
+            font-size: clamp(1.2rem, 3vw, 2.5rem);
+            color: var(--text-color);
+        }
+
+        /* NEW: Separator line for sections */
+        .separator-line {
+            width: 100%;
+            height: 1px;
+            background-color: rgba(255, 255, 255, 0.1);
+            margin: 1.5rem 0;
+        }
+
+        /* NEW: Section headings */
+        .section-heading {
+            font-weight: 600; /* semibold */
+            color: var(--text-color);
+            margin-bottom: 0.75rem;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+    <!-- The canvas for the background animation -->
+    <canvas id="background-canvas"></canvas>
+
+    <!-- NEW: The Homepage Container -->
+    <div id="homepage-container" class="show">
+        <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="currentColor" class="text-green-400 mb-6">
+            <path d="M11 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5zM18.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.39-1.09-.73-1.71-.98l-.37-2.65C14.07 2.19 13.84 2 13.5 2h-3c-.34 0-.57.19-.66.44l-.37 2.65c-.62.25-1.19.59-1.71.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.12.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.39 1.09.73 1.71.98l.37 2.65c.09.25.32.44.66.44h3c.34 0 .57-.19.66-.44l.37-2.65c.62-.25 1.19-.59 1.71-.98l2.49 1c.22.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65z"/>
+        </svg>
+        <h1 class="text-5xl font-bold mb-2 uppercase" style="color: var(--header-color);">SYNAPTIC V4</h1>
+        <p class="text-2xl md:text-3xl font-bold mb-0 uppercase ultimate-edition">ULTIMATE EDITION</p>
+        <p class="text-xl md:text-2xl text-gray-400 mb-8">Molten Theme</p>
+        <p class="mb-8 text-gray-300 text-base md:text-lg max-w-xl mx-auto">
+            Your enhanced Eaglercraft loader. V4 comes with a new molten UI and faster loading. Now with ThunderBolt, a custom 1.12 client partially designed by Barney.
+        </p>
+        <button id="go-to-loader-btn" class="launch-button px-8 py-3 text-lg">Go to Loader</button>
+    </div>
+
+    <!-- The new modal for launching the Synaptic V3 loader -->
+    <div id="launch-modal-overlay" class="modal-overlay hidden">
+        <div id="launch-modal-content" class="modal-content">
+            <button id="dismiss-launch-modal-btn" class="dismiss-btn">&times;</button>
+            <h2 class="text-3xl font-bold mb-4" style="color: var(--header-color);">Warning</h2>
+            <p class="mb-6 text-base text-gray-300">
+                Launching in Synaptic can be laggy. It's highly recommended to use the "Launch in Blob" option for better performance.
+            </p>
+            <div class="flex flex-col space-y-4 md:flex-row md:space-x-4 md:space-y-0 justify-center">
+                <button id="launch-anyway-btn" class="launch-button">Launch Anyway</button>
+                <button id="cancel-launch-btn" class="launch-button bg-red-500 hover:bg-red-700">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <!-- The new sidebar -->
+    <div id="sidebar" class="closed">
+        <div id="app-container" class="w-full text-center">
+
+            <h1 class="text-3xl font-bold mb-4 uppercase">SYNAPTIC V4</h1>
+            <p class="mb-6 text-gray-300 text-sm">
+                Synaptic V4 is an enhanced Eaglercraft loader. Upload your Eaglercraft HTML file(s) to play in your browser.
+            </p>
+
+            <!-- Back to Home button -->
+            <button id="go-to-home-btn" class="link-button w-full mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="mr-2">
+                    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+                </svg>
+                Back to Home
+            </button>
+
+            <!-- File Upload Section -->
+            <div class="space-y-4">
+                <p class="section-heading">Game Loader</p>
+                <div class="relative flex items-center justify-center">
+                    <!-- The accept attribute has been updated to allow only .html files -->
+                    <input type="file" id="file-upload" accept=".html" multiple class="hidden" />
+                    <label for="file-upload" class="cursor-pointer upload-button font-bold py-4 px-8 rounded-xl transition duration-300 transform hover:scale-105 shadow-xl">
+                        Choose Eaglercraft .html Files
+                    </label>
+                </div>
+            </div>
+
+            <!-- Separator line -->
+            <div class="separator-line"></div>
+
+            <!-- Audio Player Section -->
+            <div id="audio-player-container" class="flex flex-col items-center">
+                <p class="section-heading">Audio Player</p>
+                <p id="now-playing" class="text-gray-300 mb-4 text-sm italic"></p>
+                <div class="flex space-x-4">
+                    <button id="prev-btn" class="audio-player-button">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12zM5 5h2v14H5z"/>
+                        </svg>
+                    </button>
+                    <button id="play-pause-btn" class="audio-player-button">
+                        <svg xmlns="http://www.w3.org/24-10/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" id="play-icon">
+                            <path d="M8 5v14l11-7z"/>
+                        </svg>
+                        <svg xmlns="http://www.w3.org/24-10/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" id="pause-icon" class="hidden">
+                            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                        </svg>
+                    </button>
+                    <button id="next-btn" class="audio-player-button">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12zM19 5v14h-2V5z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Separator line -->
+            <div class="separator-line"></div>
+
+            <!-- Settings button and collapsible content -->
+            <div class="mb-6">
+                <button id="settings-btn" class="launch-button w-full font-bold flex items-center justify-center space-x-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5zM19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.39-1.09-.73-1.71-.98l-.37-2.65C14.07 2.19 13.84 2 13.5 2h-3c-.34 0-.57.19-.66.44l-.37 2.65c-.62.25-1.19.59-1.71.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.12.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.39 1.09.73 1.71.98l.37 2.65c.09.25.32.44.66.44h3c.34 0 .57-.19.66-.44l.37-2.65c.62-.25 1.19-.59 1.71-.98l2.49 1c.22.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65z"/>
+                    </svg>
+                    <span>Settings</span>
+                </button>
+                <div id="settings-content" class="settings-content">
+                    <!-- NEW: Theme presets have been moved here -->
+                    <p class="section-heading mt-4">Color Themes</p>
+                    <div class="flex flex-wrap justify-center items-center gap-2">
+                        <button id="dark-theme-btn" class="theme-button bg-gray-700 text-gray-200">Dark</button>
+                        <button id="light-theme-btn" class="theme-button bg-white text-gray-800">Light</button>
+                        <button id="minecraft-theme-btn" class="theme-button bg-gray-600 text-white">Minecraft</button>
+                    </div>
+
+                    <p class="section-heading mt-4">Backgrounds</p>
+                    <div class="flex flex-wrap justify-center items-center gap-2">
+                        <button id="bg-stars-btn" class="bg-option-btn">Stars</button>
+                        <button id="bg-bubbles-btn" class="bg-option-btn">Bubbles</button>
+                        <button id="bg-minecraft-btn" class="bg-option-btn">Minecraft</button>
+                        <button id="bg-none-btn" class="bg-option-btn">None</button>
+                    </div>
+
+                    <p class="section-heading mt-4">Custom Theme</p>
+                    <div class="space-y-2">
+                        <div class="color-input-container">
+                            <label for="bg-color-picker" class="text-gray-200 text-sm">Background</label>
+                            <input type="color" id="bg-color-picker" value="#1a202c" class="rounded-lg">
+                        </div>
+                        <div class="color-input-container">
+                            <label for="text-color-picker" class="text-gray-200 text-sm">Text</label>
+                            <input type="color" id="text-color-picker" value="#e5e7eb" class="rounded-lg">
+                        </div>
+                        <div class="color-input-container">
+                            <label for="header-color-picker" class="text-gray-200 text-sm">Header</label>
+                            <input type="color" id="header-color-picker" value="#34d399" class="rounded-lg">
+                        </div>
+                        <div class="color-input-container">
+                            <label for="btn-color-picker" class="text-gray-200 text-sm">Buttons</label>
+                            <input type="color" id="btn-color-picker" value="#8b5cf6" class="rounded-lg">
+                        </div>
+                    </div>
+                    <button id="apply-custom-theme-btn" class="mt-4 launch-button w-full font-bold">Apply Custom Theme</button>
+
+                    <!-- New Theme Persistence Section -->
+                    <p class="section-heading mt-4">Save/Load Theme</p>
+                    <div class="flex flex-col space-y-2">
+                        <button id="download-theme-btn" class="launch-button w-full font-bold">
+                            Download Theme Preferences
+                        </button>
+                        <div class="relative w-full">
+                            <!-- The accept attribute has been changed to allow only .bar2 files -->
+                            <input type="file" id="theme-upload-input" accept=".bar2" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                            <label for="theme-upload-input" class="launch-button w-full font-bold flex items-center justify-center">
+                                Upload Theme Preferences
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Separator line -->
+            <div class="separator-line"></div>
+
+            <!-- External Links Section -->
+            <div class="mb-6 space-y-3">
+                <p class="section-heading">External Links</p>
+                <!-- NEW: Unblocker button -->
+                <button id="unblocker-btn" class="link-button w-full" title="Open an unblocker service">
+                    Unblocker
+                </button>
+                <!-- This button now opens the games site in an iframe and has the correct styling -->
+                <button id="games-btn" class="link-button w-full" title="Open the games website on this page">
+                    Games
+                </button>
+                <button id="chat-btn" class="link-button w-full" title="Open the chat website on this page">
+                    Chat
+                </button>
+                <!-- New buttons added here -->
+                <button id="eaglercraft-files-btn" class="link-button w-full" title="Open a Google search page for Eaglercraft files">
+                    Eaglercraft Files
+                </button>
+                <button id="worlds-btn" class="link-button w-full" title="Open a Google search page for Eaglercraft worlds">
+                    Worlds
+                </button>
+                <!-- The Synapse button is now disabled and shows a message on click -->
+                <button id="synapse-btn" class="link-button w-full" title="Redirects to tuff.speedslicer.dev">
+                    ThunderBolt
+                </button>
+                <!-- The Legacy Edition button is now configured to open in a new tab -->
+                <button id="legacy-btn" class="link-button w-full" title="Redirects to the old Synapse loader">
+                    Legacy Edition
+                </button>
+                <!-- New Spotify Button -->
+                <button id="spotify-btn" class="link-button w-full" title="Open Spotify in a new tab">
+                    Spotify
+                </button>
+            </div>
+
+            <!-- Container for the list of uploaded files - Moved to the end of the sidebar -->
+            <div id="file-list-container" class="mt-8 space-y-3 text-left">
+                <!-- File items will be dynamically added here by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Toggle Button - Moved outside the sidebar and now fixed -->
+    <button id="sidebar-toggle-btn" class="p-3 rounded-full shadow-lg">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="toggle-icon">
+            <path d="M4 18h16v-2H4v2zm0-5h16v-2H4v2zm0-7v2h16V6H4z"/>
+        </svg>
+    </button>
+
+    <!-- Time and Battery Indicator -->
+    <div id="sys-info-container" class="sys-info-container">
+        <span id="time-display"></span>
+        <div id="battery-display" class="flex items-center gap-2">
+            <i id="battery-icon" class="fas fa-battery-three-quarters"></i>
+            <span id="battery-level"></span>
+            <i id="charging-icon" class="fas fa-bolt text-yellow-400 hidden"></i>
+        </div>
+    </div>
+
+    <!-- Message box for user feedback -->
+    <div id="message-box" class="mt-8 hidden text-white p-4 rounded-xl shadow-lg">
+        <!-- Content will be injected here by JavaScript -->
+    </div>
+
+    <!-- The iframe container for the main game -->
+    <div id="game-iframe-container" class="iframe-container">
+        <div class="p-4 w-full flex justify-center bg-gray-800 shadow-lg">
+            <button id="back-btn-game" class="link-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="mr-2">
+                    <path d="M21 11H6.83l3.58-3.59L9 6l-6 6 6 6 1.41-1.41L6.83 13H21z"/>
+                </svg>
+                Back to Loader
+            </button>
+        </div>
+        <iframe id="game-iframe" src="" title="Eaglercraft Game"></iframe>
+    </div>
+    <!-- The new iframe container for the Games website -->
+    <div id="games-iframe-container" class="iframe-container">
+        <div class="p-4 w-full flex justify-center bg-gray-800 shadow-lg">
+            <button id="back-btn-games" class="link-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="mr-2">
+                    <path d="M21 11H6.83l3.58-3.59L9 6l-6 6 6 6 1.41-1.41L6.83 13H21z"/>
+                </svg>
+                Back to Loader
+            </button>
+        </div>
+        <iframe id="games-iframe" src="https://ph4xus.github.io" title="Games Website"></iframe>
+    </div>
+    <!-- The iframe container for the Chat page -->
+    <div id="chat-iframe-container" class="iframe-container">
+        <div class="p-4 w-full flex justify-center bg-gray-800 shadow-lg">
+            <button id="back-btn-chat" class="link-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="mr-2">
+                    <path d="M21 11H6.83l3.58-3.59L9 6l-6 6 6 6 1.41-1.41L6.83 13H21z"/>
+                </svg>
+                Back to Loader
+            </button>
+        </div>
+        <iframe id="chat-iframe" src="https://lolfactor39.github.io/chat" title="Chat Website"></iframe>
+    </div>
+    <!-- The iframe container for Eaglercraft Files -->
+    <div id="eaglercraft-files-iframe-container" class="iframe-container">
+        <div class="p-4 w-full flex justify-center bg-gray-800 shadow-lg">
+            <button id="back-btn-eaglercraft-files" class="link-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="mr-2">
+                    <path d="M21 11H6.83l3.58-3.59L9 6l-6 6 6 6 1.41-1.41L6.83 13H21z"/>
+                </svg>
+                Back to Loader
+            </button>
+        </div>
+        <iframe id="eaglercraft-files-iframe" src="https://www.google.com/search?q=Eaglercraft+Files" title="Eaglercraft Files Search"></iframe>
+    </div>
+    <!-- The iframe container for Worlds -->
+    <div id="worlds-iframe-container" class="iframe-container">
+        <div class="p-4 w-full flex justify-center bg-gray-800 shadow-lg">
+            <button id="back-btn-worlds" class="link-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="mr-2">
+                    <path d="M21 11H6.83l3.58-3.59L9 6l-6 6 6 6 1.41-1.41L6.83 13H21z"/>
+                </svg>
+                Back to Loader
+            </button>
+        </div>
+        <iframe id="worlds-iframe" src="https://www.google.com/search?q=Eaglercraft+Worlds" title="Eaglercraft Worlds Search"></iframe>
+    </div>
+    <!-- NEW: Unblocker iframe container -->
+    <div id="unblocker-iframe-container" class="iframe-container">
+        <div class="p-4 w-full flex justify-center bg-gray-800 shadow-lg">
+            <button id="back-btn-unblocker" class="link-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="mr-2">
+                    <path d="M21 11H6.83l3.58-3.59L9 6l-6 6 6 6 1.41-1.41L6.83 13H21z"/>
+                </svg>
+                Back to Loader
+            </button>
+        </div>
+        <iframe id="unblocker-iframe" src="https://xzuqfwxvru.ambientinformatica.com.br/sppa/11/index.html" title="Unblocker Service"></iframe>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const fileInput = document.getElementById('file-upload');
+            const fileListContainer = document.getElementById('file-list-container');
+            const messageBox = document.getElementById('message-box');
+            const darkThemeBtn = document.getElementById('dark-theme-btn');
+            const lightThemeBtn = document.getElementById('light-theme-btn');
+            const minecraftThemeBtn = document.getElementById('minecraft-theme-btn');
+            const bgStarsBtn = document.getElementById('bg-stars-btn');
+            const bgBubblesBtn = document.getElementById('bg-bubbles-btn');
+            const bgMinecraftBtn = document.getElementById('bg-minecraft-btn');
+            const bgNoneBtn = document.getElementById('bg-none-btn');
+            const body = document.body;
+            const canvas = document.getElementById('background-canvas');
+            const ctx = canvas.getContext('2d');
+
+            // UI elements for the new sidebar and iframe views
+            const sidebar = document.getElementById('sidebar');
+            const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
+            const chatIframeContainer = document.getElementById('chat-iframe-container');
+            const gamesIframeContainer = document.getElementById('games-iframe-container'); // Games iframe
+            const gameIframeContainer = document.getElementById('game-iframe-container');
+            const gameIframe = document.getElementById('game-iframe');
+
+            // UI buttons
+            const chatBtn = document.getElementById('chat-btn');
+            const gamesBtn = document.getElementById('games-btn'); // Games button
+            const unblockerBtn = document.getElementById('unblocker-btn'); // NEW: Unblocker button
+            const backBtnChat = document.getElementById('back-btn-chat');
+            const backBtnGames = document.getElementById('back-btn-games'); // Games back button
+            const backBtnGame = document.getElementById('back-btn-game');
+            const unblockerIframeContainer = document.getElementById('unblocker-iframe-container'); // NEW: Unblocker iframe container
+            const backBtnUnblocker = document.getElementById('back-btn-unblocker'); // NEW: Unblocker back button
+
+            // New elements for the added buttons and iframes
+            const eaglercraftFilesBtn = document.getElementById('eaglercraft-files-btn');
+            const worldsBtn = document.getElementById('worlds-btn');
+            const eaglercraftFilesIframeContainer = document.getElementById('eaglercraft-files-iframe-container');
+            const worldsIframeContainer = document.getElementById('worlds-iframe-container');
+            const backBtnEaglercraftFiles = document.getElementById('back-btn-eaglercraft-files');
+            const backBtnWorlds = document.getElementById('back-btn-worlds');
+
+            // The Legacy Edition button now opens in a new tab
+            const legacyBtn = document.getElementById('legacy-btn');
+
+            // The new button element for Synapse (now ThunderBolt)
+            const synapseBtn = document.getElementById('synapse-btn');
+
+            // New Spotify button element
+            const spotifyBtn = document.getElementById('spotify-btn');
+
+            // Elements for time and battery display
+            const timeDisplay = document.getElementById('time-display');
+            const batteryLevelSpan = document.getElementById('battery-level');
+            const batteryIcon = document.getElementById('battery-icon');
+            const chargingIcon = document.getElementById('charging-icon');
+            const sysInfoContainer = document.getElementById('sys-info-container');
+
+            // Audio player elements
+            const audioPlayerContainer = document.getElementById('audio-player-container');
+            const playPauseBtn = document.getElementById('play-pause-btn');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const nowPlayingText = document.getElementById('now-playing');
+            const audio = new Audio();
+            let currentTrackIndex = 0;
+            let currentMusicList = [];
+
+            // New SVG elements
+            const playIcon = document.getElementById('play-icon');
+            const pauseIcon = document.getElementById('pause-icon');
+
+            // New Custom Theme elements
+            const settingsBtn = document.getElementById('settings-btn');
+            const settingsContent = document.getElementById('settings-content');
+            const bgColorPicker = document.getElementById('bg-color-picker');
+            const textColorPicker = document.getElementById('text-color-picker');
+            const headerColorPicker = document.getElementById('header-color-picker');
+            const btnColorPicker = document.getElementById('btn-color-picker');
+            const applyCustomThemeBtn = document.getElementById('apply-custom-theme-btn');
+
+            // New Theme Persistence elements
+            const downloadThemeBtn = document.getElementById('download-theme-btn');
+            const themeUploadInput = document.getElementById('theme-upload-input');
+
+            // New Modal elements
+            const launchModalOverlay = document.getElementById('launch-modal-overlay');
+            const dismissLaunchModalBtn = document.getElementById('dismiss-launch-modal-btn'); // New element
+            const launchAnywayBtn = document.getElementById('launch-anyway-btn');
+            const cancelLaunchBtn = document.getElementById('cancel-launch-btn');
+
+            // We need a variable to store the file to be launched
+            let fileToLaunch = null;
+
+            // NEW: Homepage elements
+            const homepageContainer = document.getElementById('homepage-container');
+            const goToLoaderBtn = document.getElementById('go-to-loader-btn');
+            const goToHomeBtn = document.getElementById('go-to-home-btn');
+
+            // Add event listener for the new dismiss button on the launch modal
+            dismissLaunchModalBtn.addEventListener('click', () => {
+                hideModal(launchModalOverlay);
+                fileToLaunch = null;
+                showMessage('Launch canceled.', 'yellow', 3000);
+            });
+            // Event listeners for the launch confirmation modal
+            cancelLaunchBtn.addEventListener('click', () => {
+                hideModal(launchModalOverlay);
+                fileToLaunch = null; // Clear the file
+                showMessage('Launch canceled.', 'yellow', 3000);
+            });
+
+            launchAnywayBtn.addEventListener('click', () => {
+                if (fileToLaunch) {
+                    launchGameIframe(fileToLaunch);
+                }
+                hideModal(launchModalOverlay);
+            });
+
+            // --- Theme and Animation Data ---
+            const themeColors = {
+                'dark-theme': {
+                    music: [],
+                },
+                'light-theme': {
+                    music: [],
+                },
+                'minecraft-theme': {
+                    music: [
+                        { name: 'Aria Math (Protostar Remix)', url: 'https://vgmsite.com/soundtracks/aria-math-protostar-remix-2020/pqukbkzagc/01.%20Protostar%20-%20Aria%20Math%20%28Protostar%20Remix%29.mp3' },
+                        { name: 'Moog City', url: 'https://vgmsite.com/soundtracks/minecraft/gvhssdil/1-06.%20Moog%20City.mp3' },
+                        { name: 'Minecraft', url: 'https://vgmsite.com/soundtracks/minecraft/rimhcfkk/1-08.%20Minecraft.mp3' }
+                    ],
+                }
+            };
+
+            const backgroundData = {
+                'stars': {
+                    type: 'canvas',
+                    glowColors: [
+                        'rgba(141, 0, 196, 0.8)', 'rgba(0, 234, 141, 0.8)', 'rgba(20, 232, 30, 0.8)',
+                        'rgba(181, 61, 255, 0.8)', 'rgba(1, 126, 213, 0.8)',
+                    ]
+                },
+                'bubbles': {
+                    type: 'canvas',
+                    bubbleColors: [
+                        'rgba(59, 130, 246, 0.5)', 'rgba(255, 159, 28, 0.5)', 'rgba(22, 163, 74, 0.5)',
+                        'rgba(147, 51, 234, 0.5)', 'rgba(239, 68, 68, 0.5)',
+                    ]
+                },
+                'minecraft': {
+                    type: 'gif',
+                },
+                'none': {
+                    type: 'none',
+                }
+            };
+
+            let currentThemeName = 'dark-theme';
+            let currentBackgroundName = 'stars';
+            let animationFrameId;
+            let mouseX = 0;
+            let mouseY = 0;
+
+            // --- Canvas Animation Logic ---
+            let stars = [];
+            let glows = [];
+            const numStars = 700;
+            const starSpeed = 0.4;
+
+            let bubbles = [];
+            const numBubbles = 50;
+
+            function setCanvasSize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            setCanvasSize();
+            window.addEventListener('resize', setCanvasSize);
+
+            // Star object constructor
+            function Star() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.radius = Math.random() * 1.5 + 0.5;
+                this.baseOpacity = Math.random();
+                this.currentOpacity = this.baseOpacity;
+                this.speedX = (Math.random() - 0.5) * starSpeed;
+                this.speedY = (Math.random() - 0.5) * starSpeed;
+            }
+
+            // Bubble object constructor
+            function Bubble() {
+                this.radius = Math.random() * 20 + 5;
+                this.x = Math.random() * (canvas.width - this.radius * 2) + this.radius;
+                this.y = canvas.height + this.radius;
+                this.speed = Math.random() * 0.5 + 1.5;
+                this.color = backgroundData['bubbles'].bubbleColors[Math.floor(Math.random() * backgroundData['bubbles'].bubbleColors.length)];
+                this.opacity = Math.random() * 0.5 + 0.3;
+                this.isPopping = false;
+                this.popScale = 1.0;
+                this.fadeOpacity = 1.0;
+            }
+
+            // Create initial stars
+            function createStars() {
+                stars = [];
+                for (let i = 0; i < numStars; i++) {
+                    stars.push(new Star());
+                }
+            }
+
+            // Create initial bubbles
+            function createBubbles() {
+                bubbles = [];
+                for (let i = 0; i < numBubbles; i++) {
+                    bubbles.push(new Bubble());
+                }
+            }
+
+            // Draw and update stars
+            function drawStars() {
+                for (let i = 0; i < stars.length; i++) {
+                    const star = stars[i];
+                    star.x += star.speedX;
+                    star.y += star.speedY;
+
+                    if (star.x < 0 || star.x > canvas.width || star.y < 0 || star.y > canvas.height) {
+                        stars[i] = new Star();
+                        if (star.speedX < 0) star.x = canvas.width; else star.x = 0;
+                        if (star.speedY < 0) star.y = canvas.height; else star.y = 0;
+                    }
+
+                    ctx.beginPath();
+                    ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2, false);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${star.currentOpacity})`;
+                    ctx.fill();
+                }
+
+                for (let i = glows.length - 1; i >= 0; i--) {
+                    const glow = glows[i];
+                    glow.opacity -= glow.fadeSpeed;
+                    if (glow.opacity <= 0) {
+                        glows.splice(i, 1);
+                        continue;
+                    }
+
+                    const glowGradient = ctx.createRadialGradient(
+                        glow.x, glow.y, 0,
+                        glow.x, glow.y, glow.radius
+                    );
+                    glowGradient.addColorStop(0, glow.color);
+                    glowGradient.addColorStop(1, `rgba(0, 0, 0, 0)`);
+
+                    ctx.fillStyle = glowGradient;
+                    ctx.globalAlpha = glow.opacity;
+                    ctx.beginPath();
+                    ctx.arc(glow.x, glow.y, glow.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.globalAlpha = 1;
+                }
+            }
+
+            // Draw and update bubbles
+            function drawBubbles() {
+                for (let i = bubbles.length - 1; i >= 0; i--) {
+                    const bubble = bubbles[i];
+                    const distance = Math.sqrt(
+                        (mouseX - bubble.x) ** 2 + (mouseY - bubble.y) ** 2
+                    );
+                    if (distance <= bubble.radius) {
+                        bubble.isPopping = true;
+                    }
+                }
+
+                for (let i = bubbles.length - 1; i >= 0; i--) {
+                    const bubble = bubbles[i];
+                    if (bubble.isPopping) {
+                        bubble.popScale -= 0.15;
+                        bubble.fadeOpacity -= 0.15;
+
+                        if (bubble.popScale <= 0) {
+                            bubbles.splice(i, 1);
+                            bubbles.push(new Bubble());
+                            continue;
+                        }
+                    } else {
+                        bubble.y -= bubble.speed;
+                        if (bubble.y < -bubble.radius) {
+                            bubbles.splice(i, 1);
+                            bubbles.push(new Bubble());
+                            continue;
+                        }
+                    }
+
+                    ctx.beginPath();
+                    ctx.arc(bubble.x, bubble.y, bubble.radius * bubble.popScale, 0, Math.PI * 2, false);
+                    ctx.strokeStyle = bubble.color;
+                    ctx.lineWidth = 2;
+                    ctx.globalAlpha = bubble.opacity * bubble.fadeOpacity;
+                    ctx.stroke();
+                }
+                ctx.globalAlpha = 1;
+            }
+
+            // Main animation loop
+            function animate() {
+                animationFrameId = requestAnimationFrame(animate);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                if (currentBackgroundName === 'stars') {
+                    drawStars();
+                } else if (currentBackgroundName === 'bubbles') {
+                    drawBubbles();
+                }
+            }
+
+            // --- Time and Battery Logic ---
+            function updateTime() {
+                const now = new Date();
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const seconds = String(now.getSeconds()).padStart(2, '0');
+                timeDisplay.textContent = `${hours}:${minutes}:${seconds}`;
+            }
+
+            function updateBatteryStatus(battery) {
+                const level = Math.floor(battery.level * 100);
+                batteryLevelSpan.textContent = `${level}%`;
+
+                // Update the battery icon
+                let iconClass = 'fa-battery-';
+                if (level > 75) {
+                    iconClass += 'three-quarters';
+                } else if (level > 50) {
+                    iconClass += 'half';
+                } else if (level > 25) {
+                    iconClass += 'quarter';
+                } else {
+                    iconClass += 'empty';
+                }
+
+                // Change color for low battery
+                if (level <= 20) {
+                    batteryIcon.classList.add('text-red-500');
+                } else {
+                    batteryIcon.classList.remove('text-red-500');
+                }
+
+                // Update icon class
+                batteryIcon.className = `fas ${iconClass}`;
+
+                // Show or hide charging icon
+                if (battery.charging) {
+                    chargingIcon.classList.remove('hidden');
+                    sysInfoContainer.classList.add('animate-pulse'); // Add a subtle pulse animation
+                } else {
+                    chargingIcon.classList.add('hidden');
+                    sysInfoContainer.classList.remove('animate-pulse');
+                }
+            }
+
+            function initBatteryStatus() {
+                if ('getBattery' in navigator) {
+                    navigator.getBattery().then(battery => {
+                        updateBatteryStatus(battery);
+                        battery.addEventListener('chargingchange', () => updateBatteryStatus(battery));
+                        battery.addEventListener('levelchange', () => updateBatteryStatus(battery));
+                    });
+                } else {
+                    // Hide the battery display if the API is not supported
+                    batteryDisplay.style.display = 'none';
+                }
+            }
+
+            // --- Audio Player Logic ---
+            function togglePlayPauseIcons() {
+                if (audio.paused) {
+                    playIcon.classList.remove('hidden');
+                    pauseIcon.classList.add('hidden');
+                } else {
+                    playIcon.classList.add('hidden');
+                    pauseIcon.classList.remove('hidden');
+                }
+            }
+
+            function playMusic() {
+                if (currentMusicList.length === 0) return;
+
+                audio.src = currentMusicList[currentTrackIndex].url;
+                audio.play().then(() => {
+                    togglePlayPauseIcons();
+                    nowPlayingText.textContent = `Now Playing: ${currentMusicList[currentTrackIndex].name}`;
+                }).catch(error => {
+                    console.error("Error playing audio:", error);
+                    showMessage('Error playing music. Try a different theme or track.', 'red', 5000);
+                });
+            }
+
+            function pauseMusic() {
+                audio.pause();
+                togglePlayPauseIcons();
+            }
+
+            function nextTrack() {
+                currentTrackIndex = (currentTrackIndex + 1) % currentMusicList.length;
+                playMusic();
+            }
+
+            function prevTrack() {
+                currentTrackIndex = (currentTrackIndex - 1 + currentMusicList.length) % currentMusicList.length;
+                playMusic();
+            }
+
+            playPauseBtn.addEventListener('click', () => {
+                if (audio.paused) {
+                    playMusic();
+                } else {
+                    pauseMusic();
+                }
+            });
+            nextBtn.addEventListener('click', nextTrack);
+            prevBtn.addEventListener('click', prevTrack);
+            audio.addEventListener('ended', nextTrack);
+
+            // --- UI and Theme Logic ---
+            /**
+             * Saves the current theme and background preferences to localStorage.
+             */
+            function savePreferences() {
+                const preferences = {
+                    themeName: currentThemeName,
+                    background: currentBackgroundName,
+                    customColors: {}
+                };
+
+                if (currentThemeName === 'custom-theme') {
+                    preferences.customColors = {
+                        bgColor: bgColorPicker.value,
+                        textColor: textColorPicker.value,
+                        headerColor: headerColorPicker.value,
+                        btnColor: btnColorPicker.value
+                    };
+                }
+
+                try {
+                    localStorage.setItem('synapticV3ThemePreferences', JSON.stringify(preferences));
+                } catch (e) {
+                    console.error("Error saving preferences to localStorage:", e);
+                    showMessage('Failed to save preferences. Browser storage might be full or disabled.', 'red', 5000);
+                }
+            }
+
+            /**
+             * Loads theme and background preferences from localStorage.
+             * Returns true if preferences were loaded, false otherwise.
+             */
+            function loadPreferences() {
+                try {
+                    const storedPreferences = localStorage.getItem('synapticV3ThemePreferences');
+                    if (storedPreferences) {
+                        const preferences = JSON.parse(storedPreferences);
+                        applyLoadedTheme(preferences);
+                        console.log("Preferences loaded from localStorage:", preferences);
+                        return true;
+                    }
+                } catch (e) {
+                    console.error("Error loading preferences from localStorage:", e);
+                    // Clear corrupted data if parsing fails
+                    localStorage.removeItem('synapticV3ThemePreferences');
+                    showMessage('Failed to load saved preferences. Default theme applied.', 'red', 5000);
+                }
+                return false;
+            }
+
+            /**
+             * Sets the active color theme and corresponding background.
+             * @param {string} themeName The name of the color theme to apply.
+             */
+            function setTheme(themeName) {
+                currentThemeName = themeName;
+
+                // Remove all theme classes and add the new one
+                body.classList.remove('dark-theme', 'light-theme', 'minecraft-theme', 'custom-theme');
+                body.classList.add(themeName);
+
+                // Update button active states for color themes
+                darkThemeBtn.classList.remove('active');
+                lightThemeBtn.classList.remove('active');
+                minecraftThemeBtn.classList.remove('active');
+                applyCustomThemeBtn.classList.remove('active');
+
+                // Determine the background to set based on the theme
+                let newBackgroundName;
+                if (themeName === 'dark-theme') {
+                    darkThemeBtn.classList.add('active');
+                    newBackgroundName = 'stars';
+                } else if (themeName === 'light-theme') {
+                    lightThemeBtn.classList.add('active');
+                    newBackgroundName = 'bubbles';
+                } else if (themeName === 'minecraft-theme') {
+                    minecraftThemeBtn.classList.add('active');
+                    newBackgroundName = 'minecraft';
+                } else if (themeName === 'custom-theme') {
+                    applyCustomThemeBtn.classList.add('active');
+                    // For custom theme, we don't change the background automatically.
+                    // The user must select it manually.
+                    newBackgroundName = currentBackgroundName;
+                 }
+
+                // Call setBackgroundAnimation with the correct background name, but do not save again to avoid redundant saves.
+                // savePreferences() will be called after both theme and background are set.
+                setBackgroundAnimation(newBackgroundName, true); // Pass true to prevent saving within setBackgroundAnimation
+
+                // Get the default colors for the selected theme
+                let defaultBg = getComputedStyle(document.documentElement).getPropertyValue('--bg-color');
+                let defaultText = getComputedStyle(document.documentElement).getPropertyValue('--text-color');
+                let defaultHeader = getComputedStyle(document.documentElement).getPropertyValue('--header-color');
+                let defaultBtn = getComputedStyle(document.documentElement).getPropertyValue('--btn-bg-primary');
+
+                if (themeName === 'custom-theme') {
+                    // Update the color pickers to reflect the applied custom colors
+                    defaultBg = getComputedStyle(document.documentElement).getPropertyValue('--custom-bg-color');
+                    defaultText = getComputedStyle(document.documentElement).getPropertyValue('--custom-text-color');
+                    defaultHeader = getComputedStyle(document.documentElement).getPropertyValue('--custom-header-color');
+                    defaultBtn = getComputedStyle(document.documentElement).getPropertyValue('--custom-btn-color');
+                }
+
+                // Update color picker values based on the new theme's defaults
+                bgColorPicker.value = defaultBg;
+                textColorPicker.value = defaultText;
+                headerColorPicker.value = defaultHeader;
+                btnColorPicker.value = defaultBtn;
+
+                // Update music list and player visibility
+                currentMusicList = themeColors[themeName]?.music || [];
+                if (currentMusicList.length > 0) {
+                    audioPlayerContainer.style.display = 'flex';
+                    currentTrackIndex = 0;
+                    nowPlayingText.textContent = `Now Playing: ${currentMusicList[currentTrackIndex].name}`;
+                    audio.pause();
+                } else {
+                    audioPlayerContainer.style.display = 'none';
+                    audio.pause();
+                }
+                // Ensure icons are correct on theme change
+                togglePlayPauseIcons();
+                savePreferences(); // Save preferences after theme is set
+            }
+
+            /**
+             * Sets the active background animation.
+             * @param {string} animationName The name of the animation to apply.
+             * @param {boolean} [skipSave=false] If true, preferences will not be saved immediately.
+             */
+            function setBackgroundAnimation(animationName, skipSave = false) {
+                currentBackgroundName = animationName;
+
+                // Reset everything
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                }
+                canvas.style.display = 'none';
+                body.classList.remove('bg-minecraft-gif');
+
+                // Update button active states
+                const bgButtons = document.querySelectorAll('.bg-option-btn');
+                bgButtons.forEach(btn => btn.classList.remove('active'));
+                // Ensure the button for the selected background is marked active
+                if(document.getElementById(`bg-${animationName}-btn`)) {
+                     document.getElementById(`bg-${animationName}-btn`).classList.add('active');
+                }
+
+                // Apply the new background
+                if (backgroundData[animationName].type === 'canvas') {
+                    canvas.style.display = 'block';
+                    if (animationName === 'stars') {
+                        createStars();
+                    } else if (animationName === 'bubbles') {
+                        createBubbles();
+                    }
+                    animate();
+                } else if (backgroundData[animationName].type === 'gif') {
+                    body.classList.add('bg-minecraft-gif');
+                }
+
+                if (!skipSave) {
+                    savePreferences(); // Save preferences after background is set
+                }
+            }
+
+            // Event handler for applying custom theme
+            applyCustomThemeBtn.addEventListener('click', () => {
+                // Get the user's selected colors
+                const customBgColor = bgColorPicker.value;
+                const customTextColor = textColorPicker.value;
+                const customHeaderColor = headerColorPicker.value;
+                const customBtnColor = btnColorPicker.value;
+
+                // Apply the colors to CSS variables
+                document.documentElement.style.setProperty('--custom-bg-color', customBgColor);
+                document.documentElement.style.setProperty('--custom-text-color', customTextColor);
+                document.documentElement.style.setProperty('--custom-header-color', customHeaderColor);
+                document.documentElement.style.setProperty('--custom-btn-color', customBtnColor);
+
+                // Set the active theme to 'custom-theme'
+                setTheme('custom-theme'); // This call to setTheme will also trigger savePreferences()
+
+                showMessage('Custom theme applied!', 'green', 5000); // 5-second duration
+            });
+
+            // Logic for downloading theme preferences
+            downloadThemeBtn.addEventListener('click', () => {
+                const themeData = {
+                    themeName: currentThemeName,
+                    background: currentBackgroundName,
+                    customColors: {}
+                };
+
+                if (currentThemeName === 'custom-theme') {
+                    themeData.customColors = {
+                        bgColor: getComputedStyle(document.documentElement).getPropertyValue('--custom-bg-color'),
+                        textColor: getComputedStyle(document.documentElement).getPropertyValue('--custom-text-color'),
+                        headerColor: getComputedStyle(document.documentElement).getPropertyValue('--custom-header-color'),
+                        btnColor: getComputedStyle(document.documentElement).getPropertyValue('--custom-btn-color')
+                    };
+                }
+                const blob = new Blob([JSON.stringify(themeData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                // The download attribute has been updated to use the .bar2 file ending
+                a.download = 'eaglercraft_theme.bar2';
+                a.click();
+                URL.revokeObjectURL(url);
+
+                showMessage('Theme preferences downloaded!', 'green', 5000);
+            });
+
+            // Logic for uploading theme preferences
+            themeUploadInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (!file) {
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const themeData = JSON.parse(e.target.result);
+                        applyLoadedTheme(themeData);
+                        showMessage('Theme preferences loaded successfully!', 'green', 5000);
+                        savePreferences(); // Save loaded preferences to localStorage as well
+                    } catch (error) {
+                        console.error('Failed to parse theme file:', error);
+                        showMessage('Failed to load theme. Please select a valid .bar2 file.', 'red', 5000);
+                    }
+                };
+                reader.onerror = () => {
+                    showMessage('Failed to read the file.', 'red', 5000);
+                };
+                reader.readAsText(file);
+            });
+
+            /**
+             * Applies a theme from a loaded data object.
+             * @param {object} themeData The parsed JSON object.
+             */
+            function applyLoadedTheme(themeData) {
+                if (themeData.themeName === 'custom-theme' && themeData.customColors) {
+                    // Apply custom colors if present
+                    document.documentElement.style.setProperty('--custom-bg-color', themeData.customColors.bgColor);
+                    document.documentElement.style.setProperty('--custom-text-color', themeData.customColors.textColor);
+                    document.documentElement.style.setProperty('--custom-header-color', themeData.customColors.headerColor);
+                    document.documentElement.style.setProperty('--custom-btn-color', themeData.customColors.btnColor);
+                    setTheme('custom-theme');
+                } else if (themeColors[themeData.themeName]) {
+                    setTheme(themeData.themeName);
+                } else {
+                    // Fallback to dark theme if the loaded themeName is not recognized
+                    setTheme('dark-theme');
+                    console.warn("Loaded theme name not recognized, falling back to dark-theme.");
+                }
+
+                // Apply background animation separately
+                if (backgroundData[themeData.background]) {
+                    setBackgroundAnimation(themeData.background);
+                } else {
+                    // Fallback to stars if background is invalid or missing
+                    setBackgroundAnimation('stars');
+                    console.warn("Loaded background name not recognized, falling back to stars.");
+                }
+            }
+
+            // Toggle the visibility of the settings section
+            settingsBtn.addEventListener('click', () => {
+                settingsContent.classList.toggle('expanded');
+                settingsBtn.classList.toggle('active');
+            });
+
+            // --- UI event handlers for the iframe feature ---
+            /**
+             * Handles switching to a specific iframe view.
+             * @param {HTMLElement} iframeContainer The container to show.
+             */
+            function showIframeView(iframeContainer) {
+                pauseMusic();
+                // Hide all main containers
+                sidebar.classList.remove('open');
+                sidebar.classList.add('closed');
+                homepageContainer.classList.remove('show');
+                sidebarToggleBtn.style.display = 'block'; // Ensure toggle button is visible when in an iframe view
+
+                // Show the requested iframe view
+                iframeContainer.style.display = 'flex';
+            }
+
+            /**
+             * Handles switching back to the main loader view (the sidebar).
+             */
+            function showMainView() {
+                // Hide all other containers
+                homepageContainer.classList.remove('show');
+                chatIframeContainer.style.display = 'none';
+                gamesIframeContainer.style.display = 'none';
+                gameIframeContainer.style.display = 'none';
+                eaglercraftFilesIframeContainer.style.display = 'none';
+                worldsIframeContainer.style.display = 'none';
+                unblockerIframeContainer.style.display = 'none'; // NEW: Hide unblocker iframe
+
+                // Show the main UI elements
+                sidebar.classList.remove('closed');
+                sidebar.classList.add('open');
+                sidebarToggleBtn.style.display = 'block'; // Ensure toggle button is visible
+            }
+
+            /**
+             * Handles switching back to the homepage view.
+             */
+            function showHomepageView() {
+                // Hide all other containers
+                sidebar.classList.remove('open');
+                sidebar.classList.add('closed');
+                chatIframeContainer.style.display = 'none';
+                gamesIframeContainer.style.display = 'none';
+                gameIframeContainer.style.display = 'none';
+                eaglercraftFilesIframeContainer.style.display = 'none';
+                worldsIframeContainer.style.display = 'none';
+                unblockerIframeContainer.style.display = 'none'; // NEW: Hide unblocker iframe
+
+                // Show the homepage
+                homepageContainer.classList.add('show');
+                sidebarToggleBtn.style.display = 'none'; // Hide toggle button on homepage
+            }
+
+            // Event listener for sidebar toggle button
+            sidebarToggleBtn.addEventListener('click', () => {
+                // If currently on homepage, switch to main view (sidebar open)
+                if (homepageContainer.classList.contains('show')) {
+                    showMainView();
+                } else {
+                    // Otherwise, just toggle the sidebar
+                    sidebar.classList.toggle('closed');
+                    sidebar.classList.toggle('open');
+                    sidebarToggleBtn.style.display = 'block'; // Ensure toggle button is visible
+                }
+            });
+
+            // Event listener for "Go to Loader" button on the homepage
+            goToLoaderBtn.addEventListener('click', showMainView);
+
+            // Event listener for "Back to Home" button on the sidebar
+            goToHomeBtn.addEventListener('click', showHomepageView);
+
+            // Event listener for Unblocker button (NEW)
+            unblockerBtn.addEventListener('click', () => {
+                showIframeView(unblockerIframeContainer);
+                showMessage('This is experimental. Type the URL in the search bar to open the site.', 'yellow', 7000); // 7-second duration
+            });
+
+            // Event listener for Games button
+            gamesBtn.addEventListener('click', () => {
+                showIframeView(gamesIframeContainer);
+            });
+
+            // Event listener for chat button
+            chatBtn.addEventListener('click', () => {
+                showIframeView(chatIframeContainer);
+            });
+
+            // New event listeners for Eaglercraft Files and Worlds buttons
+            eaglercraftFilesBtn.addEventListener('click', () => {
+                showIframeView(eaglercraftFilesIframeContainer);
+            });
+
+            worldsBtn.addEventListener('click', () => {
+                showIframeView(worldsIframeContainer);
+            });
+
+            // Legacy Edition button now opens in a new tab
+            legacyBtn.addEventListener('click', () => {
+                window.open('https://barneythegod.github.io/Synapse.github.io/', '_blank');
+            });
+
+            // Updated ThunderBolt button event listener
+            synapseBtn.addEventListener('click', () => {
+                window.open('https://drive.usercontent.google.com/u/0/uc?id=1pwqR0UlZScKpEc7STnpQB9uP_2MtzMqI&export=download', '_blank');
+            });
+
+            // Event listener for Spotify button
+            spotifyBtn.addEventListener('click', () => {
+                window.open('https://open.spotify.com/', '_blank');
+            });
+
+            // Event listener for the back buttons
+            backBtnGames.addEventListener('click', () => {
+                showMainView();
+            });
+            backBtnChat.addEventListener('click', () => {
+                showMainView();
+            });
+            backBtnGame.addEventListener('click', () => {
+                showMainView();
+                // Revoke the blob URL to free up memory
+                if (gameIframe.src) {
+                    URL.revokeObjectURL(gameIframe.src);
+                    gameIframe.src = ""; // Clear the iframe
+                }
+            });
+            backBtnEaglercraftFiles.addEventListener('click', () => {
+                showMainView();
+            });
+            backBtnWorlds.addEventListener('click', () => {
+                showMainView();
+            });
+            backBtnUnblocker.addEventListener('click', () => { // NEW: Unblocker back button
+                showMainView();
+            });
+
+
+            fileInput.addEventListener('change', (event) => {
+                const files = event.target.files;
+                if (files.length > 0) {
+                    fileListContainer.innerHTML = '';
+
+                    let validFilesCount = 0;
+                    for (const file of files) {
+                        // The file extension check has been updated to '.html'
+                        if (file.name.toLowerCase().endsWith('.html')) {
+                            addFileToList(file);
+                            validFilesCount++;
+                        } else {
+                            // Display a more specific error message for invalid file types
+                            showMessage(`Invalid file: "${file.name}". Please select an HTML file.`, 'red', 7000);
+                            return; // Stop processing and show the error for the first invalid file
+                        }
+                    }
+
+                    if (validFilesCount > 0) {
+                        showMessage(`${validFilesCount} file(s) selected. Choose a game to launch!`, 'green', 5000);
+                    } else {
+                        // This case should only be hit if no files were selected at all.
+                        showMessage('No files selected.', 'yellow', 5000);
+                    }
+                } else {
+                    fileListContainer.innerHTML = '';
+                    showMessage('No files selected.', 'yellow', 5000);
+                }
+            });
+
+            /**
+             * Dynamically adds a file and its launch button to the list.
+             * @param {File} file The file to add.
+             */
+            function addFileToList(file) {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+
+                const fileNameSpan = document.createElement('span');
+                // Removed truncate class and added the new file-name-span class to allow wrapping.
+                fileNameSpan.textContent = file.name;
+                fileNameSpan.className = 'text-gray-200 file-name-span pr-4';
+                // Add a title attribute for a tooltip on hover
+                fileNameSpan.title = file.name;
+
+                // Container for the buttons
+                const buttonsContainer = document.createElement('div');
+                buttonsContainer.className = 'file-item-buttons';
+
+                // Launch in Blob button
+                const launchBlobBtn = document.createElement('button');
+                launchBlobBtn.textContent = 'Launch in Blob';
+                launchBlobBtn.className = 'launch-button font-bold py-2 px-4 rounded-full transition duration-300 transform hover:scale-105 shadow-lg whitespace-nowrap';
+                launchBlobBtn.addEventListener('click', () => {
+                    launchGameNewTab(file);
+                });
+
+                // Launch in Synaptic button - now shows a modal
+                const launchSynapticBtn = document.createElement('button');
+                launchSynapticBtn.textContent = 'Launch in Synaptic';
+                launchSynapticBtn.className = 'launch-button font-bold py-2 px-4 rounded-full transition duration-300 transform hover:scale-105 shadow-lg whitespace-nowrap';
+
+                launchSynapticBtn.addEventListener('click', () => {
+                    // Set the file to be launched and show the modal
+                    fileToLaunch = file;
+                    showModal(launchModalOverlay);
+                });
+
+                buttonsContainer.appendChild(launchBlobBtn);
+                buttonsContainer.appendChild(launchSynapticBtn);
+
+                fileItem.appendChild(fileNameSpan);
+                fileItem.appendChild(buttonsContainer);
+                fileListContainer.appendChild(fileItem);
+            }
+
+            /**
+             * Reads a file, creates a blob URL, and launches it in the game iframe.
+             * @param {File} file The file to launch.
+             */
+            function launchGameIframe(file) {
+                // The "Launching..." message now fades after 5 seconds
+                showMessage(`Launching "${file.name}"...`, 'yellow', 5000);
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const htmlContent = e.target.result;
+                        const blob = new Blob([htmlContent], { type: 'text/html' });
+                        const url = URL.createObjectURL(blob);
+
+                        gameIframe.src = url;
+                        showIframeView(gameIframeContainer);
+                        // The "loaded" message now fades after 5 seconds
+                        showMessage(`"${file.name}" loaded!`, 'green', 5000);
+                    } catch (error) {
+                        console.error("Error launching game:", error);
+                        showMessage('Failed to launch the game. Please try again.', 'red', 5000);
+                    }
+                };
+                reader.onerror = () => {
+                    showMessage('Failed to read the file.', 'red', 5000);
+                };
+                reader.readAsText(file);
+            }
+
+            /**
+             * Reads a file, creates a blob URL, and launches it in a new tab.
+             * @param {File} file The file to launch.
+             */
+            function launchGameNewTab(file) {
+                showMessage(`Launching "${file.name}" in a new tab...`, 'yellow', 5000);
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const htmlContent = e.target.result;
+                        const blob = new Blob([htmlContent], { type: 'text/html' });
+                        const url = URL.createObjectURL(blob);
+                        window.open(url, '_blank');
+                    } catch (error) {
+                        console.error("Error launching game in new tab:", error);
+                        showMessage('Failed to launch the game in a new tab. Please try again.', 'red', 5000);
+                    }
+                };
+                reader.onerror = () => {
+                    showMessage('Failed to read the file.', 'red', 5000);
+                };
+                reader.readAsText(file);
+            }
+
+            /**
+             * Displays a message in the message box with an optional fade-out duration.
+             * @param {string} message The message to display.
+             * @param {string} type The type of message ('green' for success, 'red' for error, 'yellow' for info).
+             * @param {number} [duration=0] The time in milliseconds before the message fades out. 0 for no fade.
+             */
+            function showMessage(message, type, duration = 0) {
+                // Clear any existing timeout
+                clearTimeout(messageBox.timeoutId);
+
+                messageBox.textContent = message;
+                messageBox.classList.remove('hidden', 'bg-emerald-600', 'bg-red-600', 'bg-yellow-600', 'fade-out');
+
+                // Add the correct background class
+                if (type === 'green') {
+                    messageBox.classList.add('bg-emerald-600');
+                } else if (type === 'red') {
+                    messageBox.classList.add('bg-red-600');
+                } else {
+                    messageBox.classList.add('bg-yellow-600');
+                }
+
+                // Show the message box
+                messageBox.classList.add('block');
+
+                // If a duration is provided, set a timer to fade it out
+                if (duration > 0) {
+                    messageBox.timeoutId = setTimeout(() => {
+                        messageBox.classList.add('fade-out');
+                        // Hide the box completely after the fade transition is done
+                        setTimeout(() => {
+                            messageBox.classList.add('hidden');
+                        }, 500); // This should match the CSS transition duration
+                    }, duration);
+                }
+            }
+
+            /**
+             * Shows a modal pop-up.
+             * @param {HTMLElement} modal The modal overlay element to show.
+             */
+            function showModal(modal) {
+                modal.classList.remove('hidden');
+            }
+
+            /**
+             * Hides a modal pop-up.
+             * @param {HTMLElement} modal The modal overlay element to hide.
+             */
+            function hideModal(modal) {
+                modal.classList.add('hidden');
+            }
+
+            // --- Main Entry Point ---
+            // Initial call to set the time and battery status
+            updateTime();
+            setInterval(updateTime, 1000);
+            initBatteryStatus();
+
+            // Load preferences first, then fall back to default if none are found.
+            const preferencesLoaded = loadPreferences();
+            if (!preferencesLoaded) {
+                setTheme('dark-theme'); // Apply default dark theme if no preferences loaded
+            }
+            showHomepageView(); // Always show homepage first
+
+
+            // Event listeners for theme buttons
+            darkThemeBtn.addEventListener('click', () => setTheme('dark-theme'));
+            lightThemeBtn.addEventListener('click', () => setTheme('light-theme'));
+            minecraftThemeBtn.addEventListener('click', () => setTheme('minecraft-theme'));
+
+            // Event listeners for background buttons
+            bgStarsBtn.addEventListener('click', () => setBackgroundAnimation('stars'));
+            bgBubblesBtn.addEventListener('click', () => setBackgroundAnimation('bubbles'));
+            bgMinecraftBtn.addEventListener('click', () => setBackgroundAnimation('minecraft'));
+            bgNoneBtn.addEventListener('click', () => setBackgroundAnimation('none'));
+        });
+    </script>
+
+<script>
+window.onload = function() {
+  // Open about:blank in a new tab
+  window.open("about:blank", "_blank");
+
+  // Redirect the current tab to Google
+  window.location.href = "https://www.google.com";
+};
+</script>
+
+</body>
+</html>
